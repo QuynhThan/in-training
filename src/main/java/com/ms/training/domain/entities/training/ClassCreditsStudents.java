@@ -13,9 +13,13 @@ public class ClassCreditsStudents {
     @Column(name = "id")
     private Long id;
 
+//    @ManyToOne
+//    @JoinColumn(name = "class_credit_id")
+//    private ClassCredit classCredit;
+
     @ManyToOne
-    @JoinColumn(name = "class_credit_id")
-    private ClassCredit classCredit;
+    @JoinColumn(name = "group_id")
+    private ClassCreditGroup classCreditGroup;
 
     @ManyToOne
     @JoinColumn(name = "student_id")

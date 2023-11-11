@@ -78,4 +78,9 @@ public class MaintenanceController {
     public ResponseEntity<ClassCreditDTO> deleteClassCredit(@RequestBody ClassCreditDTO classCreditDTO){
         return new ResponseEntity<>(maintenanceService.deleteClassCredit(classCreditDTO), HttpStatus.OK);
     }
+
+    @PostMapping("/timetable/update")
+    public ResponseEntity<Object> updateTimetable(@RequestBody Object o){
+        return new ResponseEntity<>("", HttpStatus.OK);
+    }
 }

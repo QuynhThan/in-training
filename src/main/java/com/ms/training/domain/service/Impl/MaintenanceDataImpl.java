@@ -1,23 +1,19 @@
 package com.ms.training.domain.service.Impl;
 
-import com.ms.training.application.dto.training.ClassCreditDTO;
-import com.ms.training.application.dto.training.ClassroomDTO;
-import com.ms.training.application.dto.training.LecturerDTO;
-import com.ms.training.application.dto.training.SubjectDTO;
+import com.ms.training.application.dto.search.SearchRequest;
+import com.ms.training.application.dto.search.SearchSpecification;
+import com.ms.training.application.dto.training.*;
 import com.ms.training.application.exception.BusinessException;
-import com.ms.training.domain.entities.training.ClassCredit;
-import com.ms.training.domain.entities.training.Classroom;
-import com.ms.training.domain.entities.training.Lecturer;
-import com.ms.training.domain.entities.training.Subject;
+import com.ms.training.domain.entities.training.*;
 import com.ms.training.domain.mappers.MaintenanceMapper;
-import com.ms.training.domain.repositories.ClassCreditRepository;
-import com.ms.training.domain.repositories.ClassroomRepository;
-import com.ms.training.domain.repositories.LecturerRepository;
-import com.ms.training.domain.repositories.SubjectRepository;
+import com.ms.training.domain.repositories.*;
 import com.ms.training.domain.service.MaintenanceData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -34,6 +30,10 @@ public class MaintenanceDataImpl implements MaintenanceData {
 
     @Autowired
     ClassCreditRepository classCreditRepository;
+
+    @Autowired
+    StudentRepository studentRepository;
+
 
     @Override
     public SubjectDTO addSubject(SubjectDTO subjectDTO) {
@@ -142,4 +142,32 @@ public class MaintenanceDataImpl implements MaintenanceData {
 
         return classCreditDTO;
     }
+
+    @Override
+    public StudentDTO getStudent(Long id) {
+        return MaintenanceMapper.INSTANCE.toStudentDTO(studentRepository.findById(id).orElse(null));
+    }
+
+    @Override
+    public List<StudentDTO> getAllStudentBy(SearchRequest request) {
+        SearchSpecification<Student> specification = new SearchSpecification<>(request);
+        Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
+        Page<Student> entities = studentRepository.findAll(specification, pageable);
+        return entities.map(MaintenanceMapper.INSTANCE::toStudentDTO).stream().toList();
+    }
+
+    @Override
+    public LecturerDTO getLecture(Long id) {
+        return MaintenanceMapper.INSTANCE.toLectureDTO(lecturerRepository.findById(id).orElse(null));
+    }
+
+    @Override
+    public List<LecturerDTO> getLectures(SearchRequest request) {
+        SearchSpecification<Lecturer> specification = new SearchSpecification<>(request);
+        Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
+        Page<Lecturer> entities = lecturerRepository.findAll(specification, pageable);
+        return entities.map(MaintenanceMapper.INSTANCE::toLectureDTO).stream().toList();
+    }
+
+
 }

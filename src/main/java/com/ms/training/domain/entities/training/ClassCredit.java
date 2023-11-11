@@ -57,12 +57,15 @@ public class ClassCredit {
     @OneToMany(fetch = FetchType.LAZY,mappedBy = "classCredit")
     private List<Exam> examList;
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "classcredits_students",
-            joinColumns = @JoinColumn(name = "class_credit_id"),
-            inverseJoinColumns = @JoinColumn(name = "student_id")
-    )
-    private List<Student> students;
+//    @ManyToMany(cascade = CascadeType.ALL)
+//    @JoinTable(
+//            name = "classcredits_students",
+//            joinColumns = @JoinColumn(name = "id"),
+//            inverseJoinColumns = @JoinColumn(name = "student_id")
+//    )
+//    private List<Student> students;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "classCredit")
+    private List<ClassCreditGroup> groups;
 
 }

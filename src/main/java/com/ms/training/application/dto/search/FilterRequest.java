@@ -1,8 +1,8 @@
-package com.datdt.sortfilterdemo.dto;
+package com.ms.training.application.dto.search;
 
-import com.datdt.sortfilterdemo.util.enums.FieldType;
-import com.datdt.sortfilterdemo.util.enums.Operator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.ms.training.domain.enums.FieldType;
+import com.ms.training.domain.enums.Operator;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

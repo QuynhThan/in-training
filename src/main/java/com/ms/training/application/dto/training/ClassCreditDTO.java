@@ -1,12 +1,16 @@
 package com.ms.training.application.dto.training;
 
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ClassCreditDTO {
     private Long classCreditId;
     private Integer groupNumber;

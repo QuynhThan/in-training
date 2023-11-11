@@ -1,4 +1,4 @@
-package com.datdt.sortfilterdemo.util.enums;
+package com.ms.training.domain.enums;
 
 import lombok.extern.slf4j.Slf4j;
 

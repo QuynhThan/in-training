@@ -1,10 +1,14 @@
 package com.ms.training.application.dto.training;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ClassroomDTO {
     private Long classroomId;
     private String name;

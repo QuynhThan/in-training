@@ -1,7 +1,7 @@
-package com.datdt.sortfilterdemo.dto;
+package com.ms.training.application.dto.search;
 
-import com.datdt.sortfilterdemo.util.enums.SortDirection;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.ms.training.domain.enums.SortDirection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

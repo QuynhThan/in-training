@@ -1,6 +1,6 @@
-package com.datdt.sortfilterdemo.util.enums;
+package com.ms.training.domain.enums;
 
-import com.datdt.sortfilterdemo.dto.SortRequest;
+import com.ms.training.application.dto.search.SortRequest;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Order;

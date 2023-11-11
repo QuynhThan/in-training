@@ -29,8 +29,10 @@ public class Student {
     @OneToMany(fetch = FetchType.LAZY,mappedBy = "student")
     private List<BehaviorSheet> bSheets;
 
-    @ManyToMany(mappedBy = "students")
-    private List<ClassCredit> classCredits;
+//    @OneToMany(mappedBy = "students")
+//    private List<ClassCredit> classCredits;
+
+//    @OneToMany(fetch = FetchType.LAZY, mappedBy = )
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id",referencedColumnName = "class_id")

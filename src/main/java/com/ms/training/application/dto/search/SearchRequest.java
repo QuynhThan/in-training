@@ -1,4 +1,4 @@
-package com.datdt.sortfilterdemo.dto;
+package com.ms.training.application.dto.search;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

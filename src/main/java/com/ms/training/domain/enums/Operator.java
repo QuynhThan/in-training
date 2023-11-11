@@ -1,7 +1,7 @@
-package com.datdt.sortfilterdemo.util.enums;
+package com.ms.training.domain.enums;
 
+import com.ms.training.application.dto.search.FilterRequest;
 import lombok.extern.slf4j.Slf4j;
-import com.datdt.sortfilterdemo.dto.FilterRequest;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;

@@ -1,15 +1,11 @@
 package com.ms.training.domain.mappers;
 
-import com.ms.training.application.dto.training.ClassCreditDTO;
-import com.ms.training.application.dto.training.ClassroomDTO;
-import com.ms.training.application.dto.training.LecturerDTO;
-import com.ms.training.application.dto.training.SubjectDTO;
-import com.ms.training.domain.entities.training.ClassCredit;
-import com.ms.training.domain.entities.training.Classroom;
-import com.ms.training.domain.entities.training.Lecturer;
-import com.ms.training.domain.entities.training.Subject;
+import com.ms.training.application.dto.training.*;
+import com.ms.training.domain.entities.training.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
+
+import java.util.List;
 
 @Mapper
 public interface MaintenanceMapper {
@@ -19,4 +15,8 @@ public interface MaintenanceMapper {
     Lecturer toLecturers(LecturerDTO dto);
     Classroom toClassroom(ClassroomDTO dto);
     ClassCredit toClassCredit(ClassCreditDTO dto);
+    StudentDTO toStudentDTO(Student student);
+    List<StudentDTO> toStudentDTOs(List<Student> students);
+    LecturerDTO toLectureDTO(Lecturer lecturer);
+    List<LecturerDTO> toLectureDTO(List<Lecturer> lecturers);
 }
