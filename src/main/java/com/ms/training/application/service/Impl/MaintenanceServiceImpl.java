@@ -1,5 +1,6 @@
 package com.ms.training.application.service.Impl;
 
+import com.ms.training.application.dto.search.SearchRequest;
 import com.ms.training.application.dto.training.ClassCreditDTO;
 import com.ms.training.application.dto.training.ClassroomDTO;
 import com.ms.training.application.dto.training.LecturerDTO;
@@ -10,6 +11,7 @@ import com.ms.training.domain.service.MaintenanceData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -86,5 +88,10 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     @Override
     public ClassCreditDTO deleteClassCredit(ClassCreditDTO classCreditDTO) {
         return maintenanceData.deleteClassCredit(classCreditDTO);
+    }
+
+    @Override
+    public List<SubjectDTO> subjectRetrieve(SearchRequest request) {
+        return maintenanceData.subjectRetrieve(request);
     }
 }

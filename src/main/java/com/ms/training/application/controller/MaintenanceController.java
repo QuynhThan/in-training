@@ -2,15 +2,19 @@ package com.ms.training.application.controller;
 
 import com.ms.training.application.constant.ApiConstant;
 import com.ms.training.application.dto.response.UserDTO;
+import com.ms.training.application.dto.search.SearchRequest;
 import com.ms.training.application.dto.training.ClassCreditDTO;
 import com.ms.training.application.dto.training.ClassroomDTO;
 import com.ms.training.application.dto.training.LecturerDTO;
 import com.ms.training.application.dto.training.SubjectDTO;
 import com.ms.training.application.service.MaintenanceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -32,6 +36,17 @@ public class MaintenanceController {
     @PostMapping("/subject-maintenance/delete")
     public ResponseEntity<SubjectDTO> deleteSubject(@RequestBody SubjectDTO subjectDTO){
         return new ResponseEntity<>(maintenanceService.deleteSubject(subjectDTO), HttpStatus.OK);
+    }
+
+    @PostMapping("/subject-maintenance/delete/{subjectId}")
+    public ResponseEntity<SubjectDTO> deleteSubject(@PathVariable Long subjectId){
+        SubjectDTO subjectDTO = SubjectDTO.builder().subjectId(subjectId).build();
+        return new ResponseEntity<>(maintenanceService.deleteSubject(subjectDTO), HttpStatus.OK);
+    }
+
+    @PostMapping("/subject-maintenance/retrieve")
+    public ResponseEntity<List<SubjectDTO>> retrieveAll(@RequestBody(required = false) SearchRequest request) {
+        return new ResponseEntity<>(maintenanceService.subjectRetrieve(request), HttpStatus.OK);
     }
 
     @PostMapping("/lecturers-maintenance/delete")

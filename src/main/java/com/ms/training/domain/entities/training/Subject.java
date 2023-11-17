@@ -1,18 +1,26 @@
 package com.ms.training.domain.entities.training;
 
 import javax.persistence.*;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
 @Table(name = "subject")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Subject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "subject_id")
     private Long subjectId;
+
+    @Column(name = "subject_code")
+    private String subjectCode;
 
     @Column(name = "name")
     private String name;

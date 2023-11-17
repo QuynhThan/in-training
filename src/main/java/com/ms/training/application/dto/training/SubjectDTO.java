@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class SubjectDTO {
     private Long subjectId;
+    private String subjectCode;
     private String name;
     private Integer creditNum;
     private Integer theoryNum;

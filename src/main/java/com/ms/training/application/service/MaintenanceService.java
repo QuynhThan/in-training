@@ -1,10 +1,14 @@
 package com.ms.training.application.service;
 
 import com.ms.training.application.dto.response.UserDTO;
+import com.ms.training.application.dto.search.SearchRequest;
 import com.ms.training.application.dto.training.ClassCreditDTO;
 import com.ms.training.application.dto.training.ClassroomDTO;
 import com.ms.training.application.dto.training.LecturerDTO;
 import com.ms.training.application.dto.training.SubjectDTO;
+import org.springframework.http.HttpStatus;
+
+import java.util.List;
 
 public interface MaintenanceService {
     SubjectDTO addSubject(SubjectDTO subjectDTO);
@@ -30,4 +34,6 @@ public interface MaintenanceService {
     ClassCreditDTO updateClassCredit(ClassCreditDTO classCreditDTO);
 
     ClassCreditDTO deleteClassCredit(ClassCreditDTO classCreditDTO);
+
+    List<SubjectDTO> subjectRetrieve(SearchRequest request);
 }

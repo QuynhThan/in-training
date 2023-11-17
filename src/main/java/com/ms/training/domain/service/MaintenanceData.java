@@ -31,4 +31,6 @@ public interface MaintenanceData {
     LecturerDTO getLecture(Long id);
 
     List<LecturerDTO> getLectures(SearchRequest request);
+
+    List<SubjectDTO> subjectRetrieve(SearchRequest request);
 }

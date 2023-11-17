@@ -12,6 +12,8 @@ public interface MaintenanceMapper {
     public static MaintenanceMapper INSTANCE = Mappers.getMapper(MaintenanceMapper.class);
 
     Subject toSubject(SubjectDTO dto);
+    List<SubjectDTO> toSubjectDTOs(List<Subject> subjects);
+    SubjectDTO toSubjectDTO(Subject subject);
     Lecturer toLecturers(LecturerDTO dto);
     Classroom toClassroom(ClassroomDTO dto);
     ClassCredit toClassCredit(ClassCreditDTO dto);

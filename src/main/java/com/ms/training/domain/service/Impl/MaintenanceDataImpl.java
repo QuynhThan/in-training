@@ -43,7 +43,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         } catch (Exception e) {
             throw new BusinessException("", "Cannot save Subject!");
         }
-        return subjectDTO;
+        return MaintenanceMapper.INSTANCE.toSubjectDTO(subject);
     }
 
     @Override
@@ -167,6 +167,18 @@ public class MaintenanceDataImpl implements MaintenanceData {
         Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
         Page<Lecturer> entities = lecturerRepository.findAll(specification, pageable);
         return entities.map(MaintenanceMapper.INSTANCE::toLectureDTO).stream().toList();
+    }
+
+    @Override
+    public List<SubjectDTO> subjectRetrieve(SearchRequest request) {
+        if (Objects.isNull(request)) {
+            request = SearchRequest.builder()
+                    .build();
+        }
+        SearchSpecification<Subject> specification = new SearchSpecification<>(request);
+        Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
+        Page<Subject> entities = subjectRepository.findAll(specification, pageable);
+        return entities.map(MaintenanceMapper.INSTANCE::toSubjectDTO).stream().toList();
     }
 
 
