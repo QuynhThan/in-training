@@ -21,6 +21,7 @@ public class SubjectDTO {
     private Integer practicalNum;
     private String academicYear;
     private SubjectDTO prerequisite;
+    private String prerequisiteCode;
 //    private List<CurriculumDTO> curriculums;
     private List<ComponentPointDTO> componentPoints;
 //

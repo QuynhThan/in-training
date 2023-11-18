@@ -8,13 +8,17 @@ import com.ms.training.domain.entities.training.*;
 import com.ms.training.domain.mappers.MaintenanceMapper;
 import com.ms.training.domain.repositories.*;
 import com.ms.training.domain.service.MaintenanceData;
+import org.mapstruct.ap.internal.util.Strings;
+import org.mapstruct.ap.shaded.freemarker.template.utility.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 public class MaintenanceDataImpl implements MaintenanceData {
@@ -38,6 +42,9 @@ public class MaintenanceDataImpl implements MaintenanceData {
     @Override
     public SubjectDTO addSubject(SubjectDTO subjectDTO) {
         Subject subject = MaintenanceMapper.INSTANCE.toSubject(subjectDTO);
+        if (Strings.isNotEmpty(subjectDTO.getPrerequisiteCode())) {
+            subject.setPrerequisite(buildRreRequisiteSubject(subjectDTO.getPrerequisiteCode()));
+        }
         try {
             subjectRepository.save(subject);
         } catch (Exception e) {
@@ -49,13 +56,16 @@ public class MaintenanceDataImpl implements MaintenanceData {
     @Override
     public SubjectDTO updateSubject(SubjectDTO subjectDTO) {
         if (Objects.isNull(subjectDTO.getSubjectId())) {
-            throw new BusinessException("", "subject id cannot null in update");
+            throw new RuntimeException("subject id cannot null in update");
         }
         Subject subject = MaintenanceMapper.INSTANCE.toSubject(subjectDTO);
+        if (Strings.isNotEmpty(subjectDTO.getPrerequisiteCode())) {
+            subject.setPrerequisite(buildRreRequisiteSubject(subjectDTO.getPrerequisiteCode()));
+        }
         try {
             subjectRepository.save(subject);
         } catch (Exception e) {
-            throw new BusinessException("","Cannot update subject");
+            throw new RuntimeException("Cannot update subject");
         }
 
         return subjectDTO;
@@ -64,13 +74,13 @@ public class MaintenanceDataImpl implements MaintenanceData {
     @Override
     public SubjectDTO deleteSubject(SubjectDTO subjectDTO) {
         if (Objects.isNull(subjectDTO.getSubjectId())) {
-            throw new BusinessException("", "subject id cannot null in delete");
+            throw new RuntimeException("subject id cannot null in delete");
         }
         Subject subject = MaintenanceMapper.INSTANCE.toSubject(subjectDTO);
         try {
             subjectRepository.delete(subject);
         } catch (Exception e) {
-            throw new BusinessException("","Cannot delete subject");
+            throw new RuntimeException("Cannot delete subject");
         }
         return subjectDTO;
     }
@@ -153,7 +163,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         SearchSpecification<Student> specification = new SearchSpecification<>(request);
         Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
         Page<Student> entities = studentRepository.findAll(specification, pageable);
-        return entities.map(MaintenanceMapper.INSTANCE::toStudentDTO).stream().toList();
+        return MaintenanceMapper.INSTANCE.toStudentDTOs(entities.getContent());
     }
 
     @Override
@@ -166,7 +176,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         SearchSpecification<Lecturer> specification = new SearchSpecification<>(request);
         Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
         Page<Lecturer> entities = lecturerRepository.findAll(specification, pageable);
-        return entities.map(MaintenanceMapper.INSTANCE::toLectureDTO).stream().toList();
+        return MaintenanceMapper.INSTANCE.toLectureDTO(entities.getContent());
     }
 
     @Override
@@ -178,8 +188,19 @@ public class MaintenanceDataImpl implements MaintenanceData {
         SearchSpecification<Subject> specification = new SearchSpecification<>(request);
         Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
         Page<Subject> entities = subjectRepository.findAll(specification, pageable);
-        return entities.map(MaintenanceMapper.INSTANCE::toSubjectDTO).stream().toList();
+        List<SubjectDTO> res = entities.map(MaintenanceMapper.INSTANCE::toSubjectDTO).stream().collect(Collectors.toList());
+        res.stream().filter(r -> Objects.nonNull(r.getPrerequisite())).forEach(x -> {
+            x.setPrerequisiteCode(x.getPrerequisite().getSubjectCode());
+        });
+        return res;
     }
 
+    private Subject buildRreRequisiteSubject(String subjectCode) {
+        Subject subject = subjectRepository.findFirstBySubjectCode(subjectCode);
+        if (Objects.isNull(subject)) {
+            throw new RuntimeException("Subject " + subjectCode + " NOT EXITS");
+        }
+        return subject;
+    }
 
 }
