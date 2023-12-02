@@ -18,6 +18,8 @@ public class Faculty {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "faculty_code")
+    private String facultyCode;
 
     @OneToMany(fetch = FetchType.LAZY,mappedBy = "faculty")
     private List<Class> classes;

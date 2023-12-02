@@ -26,7 +26,7 @@ public class ClassCredit {
     private Integer maxSize;
 
     @Column(name = "status")
-    private Boolean status;
+    private String status;
 
     @Column(name = "regis_opening")
     private Date regisOpening;
@@ -48,7 +48,7 @@ public class ClassCredit {
 
     @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
     @JoinColumn(name = "faculty_id",referencedColumnName = "faculty_id")
-    private Faculty faculty;
+    private Faculty faculty; // theo mon hoc
 
 //    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
 //    @JoinColumn(name = "class_id",referencedColumnName = "class_id")

@@ -16,6 +16,8 @@ public interface MaintenanceData {
 
     LecturerDTO addLecturers(LecturerDTO lecturerDTO);
 
+    LecturerDTO updateLecturers(LecturerDTO lecturerDTO);
+
     ClassroomDTO addClassroom(ClassroomDTO classroomDTO);
 
     ClassroomDTO deleteClassroom(ClassroomDTO classroomDTO);
@@ -33,4 +35,12 @@ public interface MaintenanceData {
     List<LecturerDTO> getLectures(SearchRequest request);
 
     List<SubjectDTO> subjectRetrieve(SearchRequest request);
+
+    List<ClassroomDTO> getClassroom(SearchRequest request);
+
+    List<ClassCreditDTO> classCreditRetrieve(SearchRequest request);
+
+    List<FacultyDTO> facultyRetrieve(SearchRequest request);
+
+    ClassCreditDTO updateClassCredit(ClassCreditDTO classCreditDTO);
 }

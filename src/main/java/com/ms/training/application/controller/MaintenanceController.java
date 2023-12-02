@@ -3,10 +3,7 @@ package com.ms.training.application.controller;
 import com.ms.training.application.constant.ApiConstant;
 import com.ms.training.application.dto.response.UserDTO;
 import com.ms.training.application.dto.search.SearchRequest;
-import com.ms.training.application.dto.training.ClassCreditDTO;
-import com.ms.training.application.dto.training.ClassroomDTO;
-import com.ms.training.application.dto.training.LecturerDTO;
-import com.ms.training.application.dto.training.SubjectDTO;
+import com.ms.training.application.dto.training.*;
 import com.ms.training.application.service.MaintenanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
@@ -47,6 +44,26 @@ public class MaintenanceController {
     @PostMapping("/subject-maintenance/retrieve")
     public ResponseEntity<List<SubjectDTO>> retrieveAll(@RequestBody(required = false) SearchRequest request) {
         return new ResponseEntity<>(maintenanceService.subjectRetrieve(request), HttpStatus.OK);
+    }
+
+    @PostMapping("/lecturers-maintenance/retrieve")
+    public ResponseEntity<List<LecturerDTO>> retrieveAllLecturer(@RequestBody(required = false) SearchRequest request) {
+        return new ResponseEntity<>(maintenanceService.lecturerRetrieve(request), HttpStatus.OK);
+    }
+
+    @PostMapping("/classroom-maintenance/retrieve")
+    public ResponseEntity<List<ClassroomDTO>> retrieveAllClassroom(@RequestBody(required = false) SearchRequest request) {
+        return new ResponseEntity<>(maintenanceService.classroomRetrieve(request), HttpStatus.OK);
+    }
+
+    @PostMapping("/class-credit-maintenance/retrieve")
+    public ResponseEntity<List<ClassCreditDTO>> retrieveAllClassCredit(@RequestBody(required = false) SearchRequest request) {
+        return new ResponseEntity<>(maintenanceService.classCreditRetrieve(request), HttpStatus.OK);
+    }
+
+    @PostMapping("/faculty-maintenance/retrieve")
+    public ResponseEntity<List<FacultyDTO>> retrieveAllFaculty(@RequestBody(required = false) SearchRequest request) {
+        return new ResponseEntity<>(maintenanceService.facultyRetrieve(request), HttpStatus.OK);
     }
 
     @PostMapping("/lecturers-maintenance/delete")

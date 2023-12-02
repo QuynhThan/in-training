@@ -1,10 +1,7 @@
 package com.ms.training.application.service.Impl;
 
 import com.ms.training.application.dto.search.SearchRequest;
-import com.ms.training.application.dto.training.ClassCreditDTO;
-import com.ms.training.application.dto.training.ClassroomDTO;
-import com.ms.training.application.dto.training.LecturerDTO;
-import com.ms.training.application.dto.training.SubjectDTO;
+import com.ms.training.application.dto.training.*;
 import com.ms.training.application.exception.BusinessException;
 import com.ms.training.application.service.MaintenanceService;
 import com.ms.training.domain.service.MaintenanceData;
@@ -82,7 +79,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     @Override
     public ClassCreditDTO updateClassCredit(ClassCreditDTO classCreditDTO) {
         checkValidRequest(classCreditDTO.getClassCreditId());
-        return maintenanceData.addClassCredit(classCreditDTO);
+        return maintenanceData.updateClassCredit(classCreditDTO);
     }
 
     @Override
@@ -93,5 +90,25 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     @Override
     public List<SubjectDTO> subjectRetrieve(SearchRequest request) {
         return maintenanceData.subjectRetrieve(request);
+    }
+
+    @Override
+    public List<LecturerDTO> lecturerRetrieve(SearchRequest request) {
+        return maintenanceData.getLectures(request);
+    }
+
+    @Override
+    public List<ClassroomDTO> classroomRetrieve(SearchRequest request) {
+        return maintenanceData.getClassroom(request);
+    }
+
+    @Override
+    public List<ClassCreditDTO> classCreditRetrieve(SearchRequest request) {
+        return maintenanceData.classCreditRetrieve(request);
+    }
+
+    @Override
+    public List<FacultyDTO> facultyRetrieve(SearchRequest request) {
+        return maintenanceData.facultyRetrieve(request);
     }
 }

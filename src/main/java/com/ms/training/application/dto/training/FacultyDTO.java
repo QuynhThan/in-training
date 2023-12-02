@@ -16,5 +16,6 @@ import java.util.List;
 public class FacultyDTO {
     private Long facultyId;
     private String name;
-    private List<MyClassDTO> classes;
+    private String facultyCode;
+//    private List<MyClassDTO> classes;
 }

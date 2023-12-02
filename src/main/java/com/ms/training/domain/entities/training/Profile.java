@@ -8,7 +8,8 @@ import java.util.Date;
 
 @Entity
 @Table(name = "profile",uniqueConstraints = {
-        @UniqueConstraint(columnNames = "email")
+        @UniqueConstraint(columnNames = "email"),
+        @UniqueConstraint(columnNames = "profile_code")
 })
 @Data
 public class Profile {
@@ -17,9 +18,11 @@ public class Profile {
     @Column(name = "profile_id")
     private Long profileId;
 
-    @Nationalized
+    @Column(name = "profile_code")
+    private String profileCode;
+
     @Column(name = "fullnanme")
-    private String fullname;
+    private String fullName;
 
     @Column(name = "DOB")
     private Date DOB;
@@ -40,7 +43,6 @@ public class Profile {
     @JoinColumn(name = "citizen_identity", referencedColumnName = "citizen_identity", insertable = false, updatable = false)
     private MatriculateStudent matriculateStudent;
 
-    @Nationalized
     @Column(name = "address")
     private String address;
 

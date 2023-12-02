@@ -5,6 +5,7 @@ import com.ms.training.application.dto.search.SearchSpecification;
 import com.ms.training.application.dto.training.*;
 import com.ms.training.application.exception.BusinessException;
 import com.ms.training.domain.entities.training.*;
+import com.ms.training.domain.enums.StatusEnum;
 import com.ms.training.domain.mappers.MaintenanceMapper;
 import com.ms.training.domain.repositories.*;
 import com.ms.training.domain.service.MaintenanceData;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -38,7 +40,17 @@ public class MaintenanceDataImpl implements MaintenanceData {
     @Autowired
     StudentRepository studentRepository;
 
+    @Autowired
+    AccountRepository accountRepository;
 
+    @Autowired
+    ProfileRepository profileRepository;
+
+    @Autowired
+    SemesterRepository semesterRepository;
+
+    @Autowired
+    FacultyRepository facultyRepository;
     @Override
     public SubjectDTO addSubject(SubjectDTO subjectDTO) {
         Subject subject = MaintenanceMapper.INSTANCE.toSubject(subjectDTO);
@@ -97,15 +109,36 @@ public class MaintenanceDataImpl implements MaintenanceData {
     }
 
     @Override
+    @Transactional
     public LecturerDTO addLecturers(LecturerDTO lecturerDTO) {
         Lecturer lecturer = MaintenanceMapper.INSTANCE.toLecturers(lecturerDTO);
         try {
-            lecturerRepository.save(lecturer);
+            accountRepository.saveAndFlush(lecturer.getAccount());
+            profileRepository.saveAndFlush(lecturer.getProfile());
+            lecturerRepository.saveAndFlush(lecturer);
         } catch (Exception e) {
             throw new BusinessException("","cannot save lecturers");
         }
 
-        return lecturerDTO;
+        return MaintenanceMapper.INSTANCE.toLectureDTO(lecturer);
+    }
+
+    @Override
+    public LecturerDTO updateLecturers(LecturerDTO lecturerDTO) {
+        Lecturer lecturerReq = MaintenanceMapper.INSTANCE.toLecturers(lecturerDTO);
+        Lecturer lecturer = lecturerRepository.findById(lecturerDTO.getLecturerId()).orElse(null);
+        if (Objects.isNull(lecturer)) {
+            throw new RuntimeException("Lecturer not found!!");
+        }
+        lecturer.setProfile(lecturerReq.getProfile());
+        lecturer.setFaculty(lecturerReq.getFaculty());
+        try {
+            lecturerRepository.save(lecturer);
+        } catch (Exception e) {
+            throw new RuntimeException("cannot save lecturers");
+        }
+
+        return MaintenanceMapper.INSTANCE.toLectureDTO(lecturer);
     }
 
     @Override
@@ -131,14 +164,40 @@ public class MaintenanceDataImpl implements MaintenanceData {
     }
 
     @Override
+    @Transactional
     public ClassCreditDTO addClassCredit(ClassCreditDTO classCreditDTO) {
         ClassCredit classCredit = MaintenanceMapper.INSTANCE.toClassCredit(classCreditDTO);
+        Subject subject = subjectRepository.findById(classCreditDTO.getSubjectId()).orElse(null);
+        Lecturer lecturer = lecturerRepository.findById(classCreditDTO.getLecturerId()).orElse(null);
+        Classroom classroom = classroomRepository.findById(classCreditDTO.getRoomId()).orElse(null);
+        Semester semester = getSemester(classCreditDTO);
+        if (Objects.isNull(subject) || Objects.isNull(lecturer) || Objects.isNull(classroom)) {
+            throw new RuntimeException("Subject or Lecturer not found!!");
+        }
+        classCredit.setMaxSize(classroom.getMaxSize());
+        classCredit.setLecturer(lecturer);
+        classCredit.setSubject(subject);
+        classCredit.setStatus(StatusEnum.ACTIVE.name());
+        classCredit.setSemester(semester);
         try {
             classCreditRepository.save(classCredit);
         } catch (Exception e) {
             throw new BusinessException("","cannot save class credit");
         }
         return classCreditDTO;
+    }
+
+    private Semester getSemester(ClassCreditDTO classCreditDTO) {
+        Semester semester = semesterRepository.findFirstByYearAndNum(classCreditDTO.getYear(), classCreditDTO.getSemesterNo());
+        // create new semester if null
+        if (Objects.isNull(semester)) {
+            semester = semesterRepository.save(Semester.builder()
+                    .year(classCreditDTO.getYear())
+                    .num(classCreditDTO.getSemesterNo())
+                    .name(classCreditDTO.getYear() + " - " + classCreditDTO.getSemesterNo())
+                    .build());
+        }
+        return semester;
     }
 
     @Override
@@ -173,6 +232,10 @@ public class MaintenanceDataImpl implements MaintenanceData {
 
     @Override
     public List<LecturerDTO> getLectures(SearchRequest request) {
+        if (Objects.isNull(request)) {
+            request = SearchRequest.builder()
+                    .build();
+        }
         SearchSpecification<Lecturer> specification = new SearchSpecification<>(request);
         Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
         Page<Lecturer> entities = lecturerRepository.findAll(specification, pageable);
@@ -193,6 +256,62 @@ public class MaintenanceDataImpl implements MaintenanceData {
             x.setPrerequisiteCode(x.getPrerequisite().getSubjectCode());
         });
         return res;
+    }
+
+    @Override
+    public List<ClassroomDTO> getClassroom(SearchRequest request) {
+        if (Objects.isNull(request)) {
+            request = SearchRequest.builder()
+                    .build();
+        }
+        SearchSpecification<Classroom> specification = new SearchSpecification<>(request);
+        Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
+        Page<Classroom> entities = classroomRepository.findAll(specification, pageable);
+        return entities.map(MaintenanceMapper.INSTANCE::toClassroomDTO).stream().collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ClassCreditDTO> classCreditRetrieve(SearchRequest request) {
+        if (Objects.isNull(request)) {
+            request = SearchRequest.builder()
+                    .build();
+        }
+        SearchSpecification<ClassCredit> specification = new SearchSpecification<>(request);
+        Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
+        Page<ClassCredit> entities = classCreditRepository.findAll(specification, pageable);
+        List<ClassCreditDTO> res = entities.map(MaintenanceMapper.INSTANCE::toClassCreditDTO).stream().collect(Collectors.toList());
+        res.forEach(x -> {
+            if (Objects.nonNull(x.getSemester())) {
+                x.setYear(x.getSemester().getYear());
+                x.setSemesterNo(x.getSemester().getNum());
+            }
+        });
+        return res;
+    }
+
+    @Override
+    public List<FacultyDTO> facultyRetrieve(SearchRequest request) {
+        if (Objects.isNull(request)) {
+            request = SearchRequest.builder()
+                    .build();
+        }
+        SearchSpecification<Faculty> specification = new SearchSpecification<>(request);
+        Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
+        Page<Faculty> entities = facultyRepository.findAll(specification, pageable);
+        return entities.map(MaintenanceMapper.INSTANCE::toFacultyDTO).stream().collect(Collectors.toList());
+    }
+
+    @Override
+    public ClassCreditDTO updateClassCredit(ClassCreditDTO classCreditDTO) {
+        ClassCredit classCredit = classCreditRepository.findById(classCreditDTO.getClassCreditId()).orElse(null);
+        if (Objects.nonNull(classCredit)) {
+            classCredit.setRegisOpening(classCreditDTO.getRegisOpening());
+            classCredit.setRegisClosing(classCreditDTO.getRegisClosing());
+            classCredit.setSemester(getSemester(classCreditDTO));
+            classCredit.setStatus(classCreditDTO.getStatus());
+            classCreditRepository.save(classCredit);
+        }
+        return MaintenanceMapper.INSTANCE.toClassCreditDTO(classCredit);
     }
 
     private Subject buildRreRequisiteSubject(String subjectCode) {

@@ -18,7 +18,7 @@ public class LecturerDTO {
     private FacultyDTO faculty;
     private ProfileDTO profile;
     private AccountDTO account;
-    private List<MyClassDTO> classes;
-    private List<ExamDTO> exams;
+//    private List<MyClassDTO> classes;
+//    private List<ExamDTO> exams;
 
 }

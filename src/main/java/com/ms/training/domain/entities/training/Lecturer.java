@@ -2,13 +2,20 @@ package com.ms.training.domain.entities.training;
 
 
 import javax.persistence.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
 @Table(name = "lecturer")
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Lecturer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

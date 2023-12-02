@@ -16,9 +16,12 @@ public interface MaintenanceMapper {
     SubjectDTO toSubjectDTO(Subject subject);
     Lecturer toLecturers(LecturerDTO dto);
     Classroom toClassroom(ClassroomDTO dto);
+    ClassroomDTO toClassroomDTO(Classroom classroom);
     ClassCredit toClassCredit(ClassCreditDTO dto);
+    ClassCreditDTO toClassCreditDTO(ClassCredit classCredit);
     StudentDTO toStudentDTO(Student student);
     List<StudentDTO> toStudentDTOs(List<Student> students);
     LecturerDTO toLectureDTO(Lecturer lecturer);
+    FacultyDTO toFacultyDTO(Faculty faculty);
     List<LecturerDTO> toLectureDTO(List<Lecturer> lecturers);
 }
