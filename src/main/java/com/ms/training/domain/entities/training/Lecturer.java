@@ -40,4 +40,9 @@ public class Lecturer {
     @ManyToMany(fetch = FetchType.LAZY,mappedBy = "lecturers")
     private List<Exam> exams;
 
+    @ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+    @JoinTable(name = "lecturers_subjects",
+            joinColumns = @JoinColumn(name = "lecturer_id"),
+            inverseJoinColumns = @JoinColumn(name = "subject_id"))
+    private List<Subject> subjects;
 }

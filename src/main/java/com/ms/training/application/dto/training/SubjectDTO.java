@@ -1,5 +1,6 @@
 package com.ms.training.application.dto.training;
 
+import com.ms.training.domain.entities.training.Lecturer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +28,9 @@ public class SubjectDTO {
 //
 //    @OneToMany(fetch=FetchType.LAZY,mappedBy = "subject",cascade=CascadeType.ALL)
 //    private List<ComponentSubject> componentSubjects;
-
-
+    // phan mon
+    private boolean isPhanMon;
+    private String listGVStr;
+    private List<Long> listGV;
+    private List<LecturerDTO> lecturers;
 }

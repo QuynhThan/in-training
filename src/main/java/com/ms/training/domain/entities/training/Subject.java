@@ -51,6 +51,11 @@ public class Subject {
             inverseJoinColumns = @JoinColumn(name = "component_id")
     )
     private List<ComponentPoint> componentPoints;
+    @ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+    @JoinTable(name = "lecturers_subjects",
+            joinColumns = @JoinColumn(name = "subject_id"),
+            inverseJoinColumns = @JoinColumn(name = "lecturer_id"))
+    private List<Lecturer> lecturers;
 //
 //    @OneToMany(fetch=FetchType.LAZY,mappedBy = "subject",cascade=CascadeType.ALL)
 //    private List<ComponentSubject> componentSubjects;

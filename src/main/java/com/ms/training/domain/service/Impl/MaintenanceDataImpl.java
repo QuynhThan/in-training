@@ -15,9 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -53,7 +55,25 @@ public class MaintenanceDataImpl implements MaintenanceData {
     FacultyRepository facultyRepository;
     @Override
     public SubjectDTO addSubject(SubjectDTO subjectDTO) {
+        if (subjectDTO.isPhanMon()) {
+            Subject mySubject = subjectRepository.findFirstBySubjectCode(subjectDTO.getSubjectCode());
+            if (Objects.isNull(mySubject)) {
+                throw new RuntimeException("Invalid Subject!!");
+            }
+            List<Lecturer> lecturers = lecturerRepository.findByLecturerIdIn(subjectDTO.getListGV());
+            mySubject.setLecturers(lecturers);
+            try {
+                subjectRepository.save(mySubject);
+            } catch (Exception exception) {
+                throw new RuntimeException("Cannot save subject!!");
+            }
+            return MaintenanceMapper.INSTANCE.toSubjectDTO(mySubject);
+        }
+
         Subject subject = MaintenanceMapper.INSTANCE.toSubject(subjectDTO);
+        if (Objects.nonNull(subjectRepository.findFirstBySubjectCode(subject.getSubjectCode()))) {
+            throw new RuntimeException("Subject Code is existed!!");
+        }
         if (Strings.isNotEmpty(subjectDTO.getPrerequisiteCode())) {
             subject.setPrerequisite(buildRreRequisiteSubject(subjectDTO.getPrerequisiteCode()));
         }
@@ -255,7 +275,22 @@ public class MaintenanceDataImpl implements MaintenanceData {
         res.stream().filter(r -> Objects.nonNull(r.getPrerequisite())).forEach(x -> {
             x.setPrerequisiteCode(x.getPrerequisite().getSubjectCode());
         });
+        res.forEach(this::buildPhanMonInfo);
         return res;
+    }
+
+    private void buildPhanMonInfo(SubjectDTO x) {
+        List<Long> gvs = new ArrayList<>();
+        List<String> gvStr = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(x.getLecturers())) {
+            x.getLecturers().forEach(lecturerDTO -> {
+                gvs.add(lecturerDTO.getLecturerId());
+                gvStr.add(lecturerDTO.getProfile().getFullName());
+            });
+        }
+
+        x.setListGV(gvs);
+        x.setListGVStr(gvStr.toString().replace("[","").replace("]",""));
     }
 
     @Override

@@ -84,8 +84,11 @@ public class AccountServiceImpl implements AccountService {
 //        }
 //        dto.setRoleDTO(roleService.getRoleById(account.getRoleId()));
         //TODO set token for user
-
-        return dto;
+        if (dto.getPassword().equals("123"))
+            return dto;
+        else {
+            throw new RuntimeException("Account invalid!!!");
+        }
     }
 
 
