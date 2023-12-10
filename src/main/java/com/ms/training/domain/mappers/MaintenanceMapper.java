@@ -2,6 +2,7 @@ package com.ms.training.domain.mappers;
 
 import com.ms.training.application.dto.training.*;
 import com.ms.training.domain.entities.training.*;
+import com.ms.training.domain.entities.training.Class;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -24,4 +25,11 @@ public interface MaintenanceMapper {
     LecturerDTO toLectureDTO(Lecturer lecturer);
     FacultyDTO toFacultyDTO(Faculty faculty);
     List<LecturerDTO> toLectureDTO(List<Lecturer> lecturers);
+
+    List<TimeTableDTO> toTimeTableDTO(List<TimeTable> timeTables);
+    TimeTableDTO toTimeTableDTO(TimeTable timeTable);
+    List<TimeTable> toTimeTable(List<TimeTableDTO> dtos);
+
+    List<StudentClassDTO> toStudentClassDTOs(List<Class> classes);
+    StudentClassDTO toStudentClassDTO(Class c);
 }

@@ -1,6 +1,8 @@
 package com.ms.training.application.controller;
 
 import com.ms.training.application.constant.ApiConstant;
+import com.ms.training.application.dto.request.SaveTimetableReq;
+import com.ms.training.application.dto.request.SubmitTimeTableReq;
 import com.ms.training.application.dto.response.UserDTO;
 import com.ms.training.application.dto.search.SearchRequest;
 import com.ms.training.application.dto.training.*;
@@ -60,6 +62,11 @@ public class MaintenanceController {
     public ResponseEntity<List<ClassCreditDTO>> retrieveAllClassCredit(@RequestBody(required = false) SearchRequest request) {
         return new ResponseEntity<>(maintenanceService.classCreditRetrieve(request), HttpStatus.OK);
     }
+    @PostMapping("/student-class/retrieve")
+    public ResponseEntity<List<StudentClassDTO>> retrieveAllStudentClass(@RequestBody(required = false) SearchRequest request) {
+        return new ResponseEntity<>(maintenanceService.studentClassRetrieve(request), HttpStatus.OK);
+    }
+
 
     @PostMapping("/faculty-maintenance/retrieve")
     public ResponseEntity<List<FacultyDTO>> retrieveAllFaculty(@RequestBody(required = false) SearchRequest request) {
@@ -114,5 +121,20 @@ public class MaintenanceController {
     @PostMapping("/timetable/update")
     public ResponseEntity<Object> updateTimetable(@RequestBody Object o){
         return new ResponseEntity<>("", HttpStatus.OK);
+    }
+
+    @PostMapping("/timetable/submit")
+    public ResponseEntity<Object> submitTimeTable(@RequestBody(required = false) SubmitTimeTableReq req){
+        return new ResponseEntity<>(maintenanceService.submitTimeTable(req), HttpStatus.OK);
+    }
+
+    @PostMapping("/timetable/save")
+    public ResponseEntity<Object> saveTimetable(@RequestBody SaveTimetableReq req) {
+        return new ResponseEntity<>(maintenanceService.saveTimetable(req), HttpStatus.OK);
+    }
+
+    @PostMapping("/timetable/retrieve")
+    public ResponseEntity<Object> retrieveTimetable(@RequestBody(required = false) SearchRequest req) {
+        return new ResponseEntity<>(maintenanceService.retrieveTimetable(req), HttpStatus.OK);
     }
 }

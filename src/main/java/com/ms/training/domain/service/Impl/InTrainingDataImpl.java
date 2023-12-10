@@ -3,10 +3,10 @@ package com.ms.training.domain.service.Impl;
 import com.ms.training.application.dto.request.SubmitSubjectRequest;
 import com.ms.training.application.dto.training.ClassCreditDTO;
 import com.ms.training.domain.entities.training.ClassCredit;
-import com.ms.training.domain.entities.training.ClassCreditGroup;
+//import com.ms.training.domain.entities.training.ClassCreditGroup;
 import com.ms.training.domain.entities.training.ClassCreditsStudents;
 import com.ms.training.domain.entities.training.Student;
-import com.ms.training.domain.repositories.ClassCreditGroupRepository;
+//import com.ms.training.domain.repositories.ClassCreditGroupRepository;
 import com.ms.training.domain.repositories.ClassCreditRepository;
 import com.ms.training.domain.repositories.ClassCreditsStudentsRepository;
 import com.ms.training.domain.repositories.StudentRepository;
@@ -22,8 +22,8 @@ public class InTrainingDataImpl implements InTrainingData {
     ClassCreditRepository classCreditRepository;
     @Autowired
     StudentRepository studentRepository;
-    @Autowired
-    ClassCreditGroupRepository classCreditGroupRepository;
+//    @Autowired
+//    ClassCreditGroupRepository classCreditGroupRepository;
     @Autowired
     ClassCreditsStudentsRepository classCreditsStudentsRepository;
 
@@ -41,13 +41,13 @@ public class InTrainingDataImpl implements InTrainingData {
         }
         Student student = studentRepository.findById(request.getStudentId()).orElse(null);
 //        ClassCredit classCredit = classCreditRepository.findById(request.getClassCreditId()).orElse(null);
-        ClassCreditGroup classCreditGroup = classCreditGroupRepository.findById(request.getCcGroupId()).orElse(null);
-        if (Objects.isNull(classCreditGroup) || Objects.isNull(student)) {
-            throw new RuntimeException("Student or LTC not found!!");
-        }
+//        ClassCreditGroup classCreditGroup = classCreditGroupRepository.findById(request.getCcGroupId()).orElse(null);
+//        if (Objects.isNull(classCreditGroup) || Objects.isNull(student)) {
+//            throw new RuntimeException("Student or LTC not found!!");
+//        }
         ClassCreditsStudents classCreditsStudents = new ClassCreditsStudents();
         classCreditsStudents.setStudent(student);
-        classCreditsStudents.setClassCreditGroup(classCreditGroup);
+//        classCreditsStudents.setClassCreditGroup(classCreditGroup);
         classCreditsStudents.setStatus(request.getStatus());
         classCreditsStudentsRepository.save(classCreditsStudents);
         return ClassCreditDTO.builder().status("SUCCESS").build();

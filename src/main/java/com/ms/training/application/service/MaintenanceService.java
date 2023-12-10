@@ -1,5 +1,7 @@
 package com.ms.training.application.service;
 
+import com.ms.training.application.dto.request.SaveTimetableReq;
+import com.ms.training.application.dto.request.SubmitTimeTableReq;
 import com.ms.training.application.dto.response.UserDTO;
 import com.ms.training.application.dto.search.SearchRequest;
 import com.ms.training.application.dto.training.*;
@@ -41,4 +43,12 @@ public interface MaintenanceService {
     List<ClassCreditDTO> classCreditRetrieve(SearchRequest request);
 
     List<FacultyDTO> facultyRetrieve(SearchRequest request);
+
+    Object submitTimeTable(SubmitTimeTableReq req);
+
+    List<StudentClassDTO> studentClassRetrieve(SearchRequest request);
+
+    List<TimeTableDTO> saveTimetable(SaveTimetableReq req);
+
+    List<TimeTableDTO> retrieveTimetable(SearchRequest req);
 }

@@ -3,6 +3,8 @@ package com.ms.training.domain.entities.training;
 import javax.persistence.*;
 import lombok.Data;
 
+import java.util.List;
+
 @Entity
 @Table(name = "classroom")
 @Data
@@ -23,4 +25,6 @@ public class Classroom {
 
 //    @OneToMany(fetch = FetchType.LAZY,mappedBy = "classroom")
 //    private List<Exam> examList;
+    @ManyToMany(mappedBy = "classrooms")
+    private List<ClassCredit> classCredits;
 }

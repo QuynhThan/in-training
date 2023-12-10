@@ -42,4 +42,5 @@ public class ClassCreditDTO {
     private List<ExamDTO> examList;
 //    private List<StudentDTO> students;
     private List<ClassCreditGroupDTO> groups;
+    private String showDetails;
 }

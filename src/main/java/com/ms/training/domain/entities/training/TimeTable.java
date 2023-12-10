@@ -2,14 +2,22 @@ package com.ms.training.domain.entities.training;
 
 
 import javax.persistence.*;
-import lombok.Data;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "time_table")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TimeTable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,7 +25,7 @@ public class TimeTable {
     private Long timeTableId;
 
     @Column(name = "date")
-    private Date lessonDate;
+    private LocalDateTime lessonDate;
 
     @Column(name = "status")
     private Boolean status;

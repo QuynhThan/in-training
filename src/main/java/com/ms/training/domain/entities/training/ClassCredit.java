@@ -34,6 +34,9 @@ public class ClassCredit {
     @Column(name = "regis_closing")
     private Date regisClosing;
 
+    @Column(name = "date_start")
+    private Date dateStart;
+
     @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
     @JoinColumn(name = "subject_id",referencedColumnName = "subject_id")
     private Subject subject;
@@ -65,7 +68,12 @@ public class ClassCredit {
 //    )
 //    private List<Student> students;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "classCredit")
-    private List<ClassCreditGroup> groups;
+//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "classCredit")
+//    private List<ClassCreditGroup> groups;
 
+    @ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+    @JoinTable(name = "classCredits_rooms",
+            joinColumns = @JoinColumn(name = "class_credit_id"),
+            inverseJoinColumns = @JoinColumn(name = "classroom_id"))
+    private List<Classroom> classrooms;
 }

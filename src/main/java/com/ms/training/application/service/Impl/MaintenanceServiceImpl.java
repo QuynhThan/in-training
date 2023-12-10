@@ -1,5 +1,7 @@
 package com.ms.training.application.service.Impl;
 
+import com.ms.training.application.dto.request.SaveTimetableReq;
+import com.ms.training.application.dto.request.SubmitTimeTableReq;
 import com.ms.training.application.dto.search.SearchRequest;
 import com.ms.training.application.dto.training.*;
 import com.ms.training.application.exception.BusinessException;
@@ -110,5 +112,25 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     @Override
     public List<FacultyDTO> facultyRetrieve(SearchRequest request) {
         return maintenanceData.facultyRetrieve(request);
+    }
+
+    @Override
+    public Object submitTimeTable(SubmitTimeTableReq req) {
+        return maintenanceData.submitTimeTable(req);
+    }
+
+    @Override
+    public List<StudentClassDTO> studentClassRetrieve(SearchRequest request) {
+        return maintenanceData.studentClassRetrieve(request);
+    }
+
+    @Override
+    public List<TimeTableDTO> saveTimetable(SaveTimetableReq req) {
+        return maintenanceData.saveTimetable(req);
+    }
+
+    @Override
+    public List<TimeTableDTO> retrieveTimetable(SearchRequest req) {
+        return maintenanceData.retrieveTimetable(req);
     }
 }

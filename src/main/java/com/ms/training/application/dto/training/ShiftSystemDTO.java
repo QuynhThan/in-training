@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -14,9 +15,9 @@ import java.util.List;
 @NoArgsConstructor
 public class ShiftSystemDTO {
     private Integer shiftSystemId;
-    private Date timeStart;
-    private Date timeClose;
+    private LocalDateTime timeStart;
+    private LocalDateTime timeClose;
     private Boolean type;
-    private List<TimeTableDTO> timeTable;
+//    private List<TimeTableDTO> timeTable;
 
 }
