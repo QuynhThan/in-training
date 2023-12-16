@@ -13,9 +13,9 @@ public class ClassCreditsStudents {
     @Column(name = "id")
     private Long id;
 
-//    @ManyToOne
-//    @JoinColumn(name = "class_credit_id")
-//    private ClassCredit classCredit;
+    @ManyToOne
+    @JoinColumn(name = "class_credit_id")
+    private ClassCredit classCredit;
 
 //    @ManyToOne
 //    @JoinColumn(name = "group_id")
@@ -26,6 +26,6 @@ public class ClassCreditsStudents {
     private Student student;
 
     @Column(name = "status")
-    private Boolean status;
+    private String status;
 
 }

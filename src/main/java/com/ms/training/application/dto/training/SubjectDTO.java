@@ -33,4 +33,5 @@ public class SubjectDTO {
     private String listGVStr;
     private List<Long> listGV;
     private List<LecturerDTO> lecturers;
+    private Long khoa;
 }

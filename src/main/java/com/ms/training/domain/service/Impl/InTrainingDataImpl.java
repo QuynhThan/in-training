@@ -7,6 +7,7 @@ import com.ms.training.domain.entities.training.ClassCredit;
 import com.ms.training.domain.entities.training.ClassCreditsStudents;
 import com.ms.training.domain.entities.training.Student;
 //import com.ms.training.domain.repositories.ClassCreditGroupRepository;
+import com.ms.training.domain.enums.StatusEnum;
 import com.ms.training.domain.repositories.ClassCreditRepository;
 import com.ms.training.domain.repositories.ClassCreditsStudentsRepository;
 import com.ms.training.domain.repositories.StudentRepository;
@@ -31,10 +32,11 @@ public class InTrainingDataImpl implements InTrainingData {
 
     @Override
     public ClassCreditDTO submitRegistration(SubmitSubjectRequest request) {
+        String saveStatus = request.getStatus() ? StatusEnum.ACTIVE.name() : StatusEnum.INACTIVE.name();
         if (Objects.nonNull(request.getRegisteredId())) {
             ClassCreditsStudents classCreditsStudents = classCreditsStudentsRepository.findById(request.getRegisteredId()).orElse(null);
             if (Objects.nonNull(classCreditsStudents)) {
-                classCreditsStudents.setStatus(request.getStatus());
+                classCreditsStudents.setStatus(saveStatus);
                 classCreditsStudentsRepository.save(classCreditsStudents);
                 return ClassCreditDTO.builder().status("SUCCESS").build();
             }
@@ -48,7 +50,7 @@ public class InTrainingDataImpl implements InTrainingData {
         ClassCreditsStudents classCreditsStudents = new ClassCreditsStudents();
         classCreditsStudents.setStudent(student);
 //        classCreditsStudents.setClassCreditGroup(classCreditGroup);
-        classCreditsStudents.setStatus(request.getStatus());
+        classCreditsStudents.setStatus(saveStatus);
         classCreditsStudentsRepository.save(classCreditsStudents);
         return ClassCreditDTO.builder().status("SUCCESS").build();
     }

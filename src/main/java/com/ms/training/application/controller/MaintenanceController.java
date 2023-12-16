@@ -7,6 +7,7 @@ import com.ms.training.application.dto.response.UserDTO;
 import com.ms.training.application.dto.search.SearchRequest;
 import com.ms.training.application.dto.training.*;
 import com.ms.training.application.service.MaintenanceService;
+import com.ms.training.domain.service.MaintenanceData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.http.HttpStatus;
@@ -21,10 +22,17 @@ import java.util.List;
 public class MaintenanceController {
     @Autowired
     MaintenanceService maintenanceService;
+    @Autowired
+    MaintenanceData maintenanceData;
 
     @PostMapping("/subject-maintenance/add")
     public ResponseEntity<SubjectDTO> addSubject(@RequestBody SubjectDTO subjectDTO){
         return new ResponseEntity<>(maintenanceService.addSubject(subjectDTO), HttpStatus.OK);
+    }
+
+    @PostMapping("/curriculum-maintenance/add")
+    public ResponseEntity<CurriculumDTO> addCurriculum(@RequestBody CurriculumDTO request){
+        return new ResponseEntity<>(maintenanceData.addCCDT(request), HttpStatus.OK);
     }
 
     @PostMapping("/subject-maintenance/update")
@@ -136,5 +144,10 @@ public class MaintenanceController {
     @PostMapping("/timetable/retrieve")
     public ResponseEntity<Object> retrieveTimetable(@RequestBody(required = false) SearchRequest req) {
         return new ResponseEntity<>(maintenanceService.retrieveTimetable(req), HttpStatus.OK);
+    }
+
+    @PostMapping("/trigger/lop-tin-chi")
+    public ResponseEntity<Object> triggerLTC(@RequestBody(required = false) SearchRequest req) {
+        return new ResponseEntity<>(maintenanceData.triggerDKMonHoc(), HttpStatus.OK);
     }
 }

@@ -1,6 +1,7 @@
 package com.ms.training.domain.service;
 
 import com.ms.training.application.dto.request.SaveTimetableReq;
+import com.ms.training.application.dto.request.SubmitSubjectRequest;
 import com.ms.training.application.dto.request.SubmitTimeTableReq;
 import com.ms.training.application.dto.search.SearchRequest;
 import com.ms.training.application.dto.training.*;
@@ -53,4 +54,10 @@ public interface MaintenanceData {
     List<TimeTableDTO> saveTimetable(SaveTimetableReq req);
 
     List<TimeTableDTO> retrieveTimetable(SearchRequest req);
+
+    CurriculumDTO addCCDT(CurriculumDTO request);
+
+    Object registerSubmit(SubmitSubjectRequest request);
+
+    Object triggerDKMonHoc();
 }

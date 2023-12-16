@@ -37,6 +37,9 @@ public class ClassCredit {
     @Column(name = "date_start")
     private Date dateStart;
 
+    @Column(name = "student_class_id")
+    private Long studentClassId;
+
     @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
     @JoinColumn(name = "subject_id",referencedColumnName = "subject_id")
     private Subject subject;

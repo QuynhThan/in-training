@@ -15,5 +15,6 @@ public interface AccountMapper {
     List<AccountDTO> toAccountDtoList(List<Account> accounts);
     List<Account> toAccountList(List<AccountDTO> accountDTOS);
     Account toAccount(AccountDTO dto);
+    com.ms.training.domain.entities.training.Account toAccount(com.ms.training.application.dto.training.AccountDTO dto);
 
 }

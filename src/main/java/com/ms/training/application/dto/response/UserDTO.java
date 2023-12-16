@@ -1,6 +1,7 @@
 package com.ms.training.application.dto.response;
 
 import com.ms.training.application.dto.Actor;
+import com.ms.training.application.dto.training.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,5 +19,8 @@ public class UserDTO {
     String is;
     Boolean isAdmin;
     Actor actor;
-
+    String role;
+    ProfileDTO profile;
+    AccountDTO account;
+    MyClassDTO aClass;
 }

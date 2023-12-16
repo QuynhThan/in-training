@@ -19,7 +19,9 @@ public class SearchRequest {
     private List<FilterRequest> filters;
 
     private List<SortRequest> sorts;
-
+    private String userName;
+    private String role;
+    private boolean isRegistered;
     private Integer page;
 
     private Integer size;

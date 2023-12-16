@@ -2,6 +2,7 @@ package com.ms.training.application.dto.training;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +30,7 @@ public class ClassCreditDTO {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date regisClosing;
     private Long subjectId;
+    private Long studentClassId;
     private SubjectDTO subject;
     private Long semesterId;
     private Integer year;
@@ -43,4 +45,10 @@ public class ClassCreditDTO {
 //    private List<StudentDTO> students;
     private List<ClassCreditGroupDTO> groups;
     private String showDetails;
+    private List<Long> listClass;
+    private Long lopHoc;
+    @JsonProperty("lecturer.profile.fullName")
+    private String gvName;
+    @JsonProperty("subject.name")
+    private String subjectN;
 }

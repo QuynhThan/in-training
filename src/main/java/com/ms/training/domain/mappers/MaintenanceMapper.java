@@ -20,6 +20,7 @@ public interface MaintenanceMapper {
     ClassroomDTO toClassroomDTO(Classroom classroom);
     ClassCredit toClassCredit(ClassCreditDTO dto);
     ClassCreditDTO toClassCreditDTO(ClassCredit classCredit);
+    List<ClassCreditDTO> toClassCreditDTOs(List<ClassCredit> classCredits);
     StudentDTO toStudentDTO(Student student);
     List<StudentDTO> toStudentDTOs(List<Student> students);
     LecturerDTO toLectureDTO(Lecturer lecturer);
@@ -32,4 +33,8 @@ public interface MaintenanceMapper {
 
     List<StudentClassDTO> toStudentClassDTOs(List<Class> classes);
     StudentClassDTO toStudentClassDTO(Class c);
+    AccountDTO toAccountDTO(Account account);
+    ProfileDTO toProfileDTO(Profile profile);
+    MyClassDTO toMyClassDTO(Class c);
+    List<ShiftSystemDTO> toShiftSystemDTOS(List<ShiftSystem> shiftSystems);
 }

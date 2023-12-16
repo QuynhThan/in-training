@@ -13,7 +13,7 @@ public class MyClassDTO {
     private Long classId;
     private String name;
     private LecturerDTO lecturer;
-    private List<StudentDTO> students;
+//    private List<StudentDTO> students;
     private FacultyDTO faculty;
 
 }

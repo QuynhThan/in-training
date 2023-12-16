@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -20,4 +21,6 @@ public class SaveTimetableReq {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date startDate;
     private List<TimeTableDTO> timeTables;
+    private List<LocalDateTime> startDates;
+    private List<LocalDateTime> endDates;
 }

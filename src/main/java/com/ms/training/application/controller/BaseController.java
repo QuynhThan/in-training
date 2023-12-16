@@ -22,7 +22,7 @@ public class BaseController {
     public ResponseEntity<UserDTO> login(@RequestBody UserDTO userDTO, HttpSession session){
         UserDTO response = accountService.login(userDTO);
         session.setAttribute("user",userDTO);
-        return new ResponseEntity<>(userDTO, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/logout")
@@ -39,14 +39,14 @@ public class BaseController {
 
     @PostMapping("/register")
     public ResponseEntity<UserDTO> register(@RequestBody AccountDTO accountDTO, HttpSession session){
-        AccountDTO response = accountService.addAccount(accountDTO);
-        session.setAttribute("user", UserDTO.builder()
-//                .roleDTO(response.getRoleDTO())
-                .is(response.getRoleId().toString())
-                .userName(response.getUsername())
-                .password(response.getPassword()).build());
+//        AccountDTO response = accountService.addAccount(accountDTO);
+//        session.setAttribute("user", UserDTO.builder()
+////                .roleDTO(response.getRoleDTO())
+//                .is(response.getRoleId().toString())
+//                .userName(response.getUsername())
+//                .password(response.getPassword()).build());
         UserDTO userDTO = UserDTO.builder()
-                .userName(response.getUsername())
+//                .userName(response.getUsername())
                 .password(accountDTO.getPassword()).build();
         return login(userDTO, session);
     }

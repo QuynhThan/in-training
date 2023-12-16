@@ -21,7 +21,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
 
     private void checkValidRequest(Long id) {
         if (Objects.isNull(id)) {
-            throw new BusinessException("","Id cannot null!!");
+            throw new RuntimeException("Id cannot null!!");
         }
     }
 
@@ -53,6 +53,7 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     @Override
     public LecturerDTO updateLecturers(LecturerDTO lecturerDTO) {
         checkValidRequest(lecturerDTO.getLecturerId());
+        lecturerDTO.setUpdate(Boolean.TRUE);
         return maintenanceData.addLecturers(lecturerDTO);
     }
 

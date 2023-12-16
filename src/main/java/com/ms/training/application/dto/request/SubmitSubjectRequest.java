@@ -1,5 +1,6 @@
 package com.ms.training.application.dto.request;
 
+import com.ms.training.application.dto.training.ClassCreditDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,4 +17,6 @@ public class SubmitSubjectRequest {
     private Long classCreditId;
     private Long ccGroupId;
     private Boolean status;
+    private String userName;
+    private ClassCreditDTO classCredit;
 }

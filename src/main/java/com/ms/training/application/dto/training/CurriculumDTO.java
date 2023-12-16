@@ -18,4 +18,6 @@ public class CurriculumDTO {
     private Integer numSubject;
     private FacultyDTO faculty;
     private List<SubjectDTO> subjects;
+    private List<Long> subjectIds;
+    private Long facultyId;
 }

@@ -1,6 +1,10 @@
 package com.ms.training.domain.service.Impl;
 
 import com.ms.training.application.dto.request.SaveTimetableReq;
+import com.ms.training.application.dto.request.SubmitSubjectRequest;
+import com.ms.training.application.dto.search.FilterRequest;
+import com.ms.training.domain.enums.FieldType;
+import com.ms.training.domain.enums.Operator;
 import geneticalgorithm.*;
 import com.ms.training.application.dto.request.SubmitTimeTableReq;
 import com.ms.training.application.dto.search.SearchRequest;
@@ -23,9 +27,8 @@ import org.springframework.util.CollectionUtils;
 
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static geneticalgorithm.ScheduleAlgo.buildSchedule;
@@ -45,6 +48,9 @@ public class MaintenanceDataImpl implements MaintenanceData {
 
     @Autowired
     ClassCreditRepository classCreditRepository;
+
+    @Autowired
+    ClassCreditsStudentsRepository classCreditsStudentsRepository;
 
     @Autowired
     StudentRepository studentRepository;
@@ -69,6 +75,9 @@ public class MaintenanceDataImpl implements MaintenanceData {
 
     @Autowired
     TimeTableRepository timeTableRepository;
+
+    @Autowired
+    CurriculumRepository curriculumRepository;
     @Override
     public SubjectDTO addSubject(SubjectDTO subjectDTO) {
         if (subjectDTO.isPhanMon()) {
@@ -96,7 +105,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         try {
             subjectRepository.save(subject);
         } catch (Exception e) {
-            throw new BusinessException("", "Cannot save Subject!");
+            throw new RuntimeException("Cannot save Subject!");
         }
         return MaintenanceMapper.INSTANCE.toSubjectDTO(subject);
     }
@@ -139,7 +148,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         try {
             lecturerRepository.delete(lecturer);
         } catch (Exception e) {
-            throw new BusinessException("","cannot delete lecturers");
+            throw new RuntimeException("Khong the xoa giang vien");
         }
         return lecturerDTO;
     }
@@ -148,12 +157,30 @@ public class MaintenanceDataImpl implements MaintenanceData {
     @Transactional
     public LecturerDTO addLecturers(LecturerDTO lecturerDTO) {
         Lecturer lecturer = MaintenanceMapper.INSTANCE.toLecturers(lecturerDTO);
+        if (lecturerDTO.isUpdate()) {
+            if (Strings.isEmpty(lecturerDTO.getFullName()) || Strings.isEmpty(lecturerDTO.getPhone())) {
+                throw new RuntimeException("Tên và sdt rỗng!!");
+            }
+            lecturer = lecturerRepository.findById(lecturerDTO.getLecturerId()).orElse(null);
+            lecturer.getProfile().setFullName(lecturerDTO.getFullName());
+            lecturer.getProfile().setPhone(lecturerDTO.getPhone());
+            profileRepository.saveAndFlush(lecturer.getProfile());
+            return MaintenanceMapper.INSTANCE.toLectureDTO(lecturer);
+        }
         try {
+            if (Objects.nonNull(accountRepository.findByUsername(lecturerDTO.getAccount().getUsername()))) {
+                throw new RuntimeException("Ten tài khoản đã tồn tại!!");
+            }
+            if (Objects.nonNull(profileRepository.findFirstByProfileCode(lecturerDTO.getProfile().getProfileCode()))) {
+                throw new RuntimeException("Mã người dùng đã tồn tai!!");
+            }
             accountRepository.saveAndFlush(lecturer.getAccount());
             profileRepository.saveAndFlush(lecturer.getProfile());
             lecturerRepository.saveAndFlush(lecturer);
+        } catch (RuntimeException ex) {
+            throw ex;
         } catch (Exception e) {
-            throw new BusinessException("","cannot save lecturers");
+            throw new RuntimeException("cannot save lecturers");
         }
 
         return MaintenanceMapper.INSTANCE.toLectureDTO(lecturer);
@@ -183,7 +210,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         try {
             classroomRepository.save(classroom);
         } catch (Exception e) {
-            throw new BusinessException("","cannot save classroom");
+            throw new RuntimeException("cannot save classroom");
         }
         return classroomDTO;
     }
@@ -194,7 +221,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         try {
             classroomRepository.delete(classroom);
         } catch (Exception e) {
-            throw new BusinessException("","cannot delete classroom");
+            throw new RuntimeException("cannot delete classroom");
         }
         return classroomDTO;
     }
@@ -202,26 +229,67 @@ public class MaintenanceDataImpl implements MaintenanceData {
     @Override
     @Transactional
     public ClassCreditDTO addClassCredit(ClassCreditDTO classCreditDTO) {
+        validateClassCreditReq(classCreditDTO);
         ClassCredit classCredit = MaintenanceMapper.INSTANCE.toClassCredit(classCreditDTO);
         Subject subject = subjectRepository.findById(classCreditDTO.getSubjectId()).orElse(null);
         Lecturer lecturer = lecturerRepository.findById(classCreditDTO.getLecturerId()).orElse(null);
+        if (Objects.isNull(classCreditDTO.getRoomId())) {
+            classCreditDTO.setRoomId(0l);
+        }
         Classroom classroom = classroomRepository.findById(classCreditDTO.getRoomId()).orElse(null);
         Semester semester = getSemester(classCreditDTO);
-        if (Objects.isNull(subject) || Objects.isNull(classroom)) {
-            throw new RuntimeException("Subject or Lecturer not found!!");
+        List<Class> studentClasses = classRepository.findAllByClassIdIn(classCreditDTO.getListClass());
+        Class aClass = classRepository.findById(classCreditDTO.getLopHoc()).orElse(null);
+        if (Objects.nonNull(aClass)) {
+            studentClasses.add(aClass);
         }
-        classCredit.setMaxSize(classroom.getMaxSize());
+        if (Objects.isNull(subject) || CollectionUtils.isEmpty(studentClasses)) {
+            throw new RuntimeException("Subject or Student class not found!!");
+        }
+//        classCredit.setMaxSize(classroom.getMaxSize());
         classCredit.setLecturer(lecturer);
         classCredit.setSubject(subject);
         classCredit.setStatus(StatusEnum.INACTIVE.name());
         classCredit.setSemester(semester);
-        classCredit.setClassrooms(List.of(classroom));
+        if (Objects.nonNull(classroom)) {
+            classCredit.setClassrooms(List.of(classroom));
+        }
+        // validate class
+        studentClasses.forEach(c -> {
+            Curriculum curriculum = curriculumRepository.findFirstByFaculty(c.getFaculty());
+            if (Objects.isNull(curriculum)) {
+                throw new RuntimeException("Khoa " + c.getFaculty().getName() + " chưa có chương trình đạo tạo nên không thể tạo LTC cho lớp "+ c.getName());
+            }
+            if (!curriculum.getSubjects().contains(subject)) {
+                throw new RuntimeException("Môn " + subject.getName() + " không có trong chương trình đào tạo của lớp " + c.getName());
+            }
+        });
         try {
-            classCreditRepository.save(classCredit);
+            studentClasses.forEach(stuClass -> {
+                classCredit.setStudentClassId(stuClass.getClassId());
+                classCreditRepository.save(classCredit);
+            });
         } catch (Exception e) {
-            throw new BusinessException("","cannot save class credit");
+            throw new RuntimeException("cannot save class credit");
         }
         return classCreditDTO;
+    }
+
+    private static void validateClassCreditReq(ClassCreditDTO classCreditDTO) {
+        if (classCreditDTO.getRegisOpening().after(classCreditDTO.getRegisClosing())) {
+            throw new RuntimeException("Ngày mở phải trước hạn");
+        }
+        // check input year
+        int thisYear = LocalDateTime.now().getYear();
+        if (classCreditDTO.getSemesterNo() != 1 && classCreditDTO.getSemesterNo() != 2) {
+            throw new RuntimeException("Học kỳ không hợp lệ!!");
+        }
+        if (classCreditDTO.getYear() < (thisYear - 1)) {
+            throw new RuntimeException("Năm học không hợp lệ!!");
+        }
+        if (classCreditDTO.getYear() == (thisYear - 1) && classCreditDTO.getSemesterNo() == 1) {
+            throw new RuntimeException("Năm học không hợp lệ!!");
+        }
     }
 
     private Semester getSemester(ClassCreditDTO classCreditDTO) {
@@ -243,7 +311,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         try {
             classCreditRepository.delete(classCredit);
         } catch (Exception e) {
-            throw new BusinessException("","cannot delete class credit");
+            throw new RuntimeException("cannot delete class credit");
         }
 
         return classCreditDTO;
@@ -331,13 +399,40 @@ public class MaintenanceDataImpl implements MaintenanceData {
         SearchSpecification<ClassCredit> specification = new SearchSpecification<>(request);
         Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
         Page<ClassCredit> entities = classCreditRepository.findAll(specification, pageable);
-        List<ClassCreditDTO> res = entities.map(MaintenanceMapper.INSTANCE::toClassCreditDTO).stream().collect(Collectors.toList());
+        List<ClassCredit> results = new ArrayList<>();
+        if (Objects.nonNull(request.getUserName()) && request.getRole().equalsIgnoreCase("student")) {
+            Student student = studentRepository.findStudentByAccount_Username(request.getUserName());
+            Curriculum stuCurri = curriculumRepository.findFirstByFaculty(student.getAClass().getFaculty());
+            for(ClassCredit classCredit : entities.getContent()) {
+                if (!classCredit.getSubject().getCurriculums().contains(stuCurri)) {
+                    continue;
+                }
+                ClassCreditsStudents dkm = classCreditsStudentsRepository.findFirstByClassCreditAndStudent(classCredit, student);
+                Date today = new Date();
+                if (request.isRegistered() && Objects.nonNull(dkm) && dkm.getStatus().equalsIgnoreCase(StatusEnum.ACTIVE.name())) {
+                    if (today.compareTo(classCredit.getRegisOpening()) > 0 && today.compareTo(classCredit.getRegisClosing()) <= 0) {
+                        results.add(classCredit);
+                    }
+
+                } else if (!request.isRegistered() && (Objects.isNull(dkm) || dkm.getStatus().equalsIgnoreCase(StatusEnum.INACTIVE.name()))) {
+                    if (today.compareTo(classCredit.getRegisOpening()) > 0 && today.compareTo(classCredit.getRegisClosing()) <= 0) {
+                        results.add(classCredit);
+                    }
+                }
+            }
+        } else {
+            results.addAll(entities.getContent());
+        }
+
+        List<ClassCreditDTO> res = MaintenanceMapper.INSTANCE.toClassCreditDTOs(results);
         res.forEach(x -> {
             if (Objects.nonNull(x.getSemester())) {
                 x.setYear(x.getSemester().getYear());
                 x.setSemesterNo(x.getSemester().getNum());
             }
-            x.setShowDetails(x.getClassCreditId() + "-" +  x.getSubject().getName() + "-" + x.getYear() + "-" + x.getSemesterNo());
+            Class myClass = classRepository.findById(x.getStudentClassId()).orElse(null);
+            String className = Objects.nonNull(myClass) ? myClass.getName() : "";
+            x.setShowDetails(x.getClassCreditId() + "-" +  x.getSubject().getName() +"-"+ className + "-" + x.getYear() + "-" + x.getSemesterNo());
         });
         return res;
     }
@@ -356,7 +451,28 @@ public class MaintenanceDataImpl implements MaintenanceData {
 
     @Override
     public ClassCreditDTO updateClassCredit(ClassCreditDTO classCreditDTO) {
+        StatusEnum statusEnum = null;
+        try {
+            statusEnum = StatusEnum.valueOf(classCreditDTO.getStatus());
+            validateClassCreditReq(classCreditDTO);
+        } catch (RuntimeException exception) {
+            throw exception;
+        } catch (Exception e) {
+            throw new RuntimeException("Status không hợp lệ!!!");
+        }
         ClassCredit classCredit = classCreditRepository.findById(classCreditDTO.getClassCreditId()).orElse(null);
+        if (statusEnum.name().equalsIgnoreCase(StatusEnum.ACTIVE.name())) {
+            if (Objects.isNull(classCredit.getLecturer())) {
+                throw new RuntimeException("Chưa được giao giảng viên vui lòng chuyển sang INACTIVE và tạo lại lịch học!!");
+            }
+        }
+        if (statusEnum.name().equalsIgnoreCase(StatusEnum.CANCELLED.name()) || statusEnum.name().equalsIgnoreCase(StatusEnum.INACTIVE.name())) {
+            List<TimeTable> timeTables = timeTableRepository.findByClassCredit(classCredit);
+            timeTables.forEach(x -> {
+                x.setStatus(Boolean.FALSE);
+            });
+            timeTableRepository.saveAll(timeTables);
+        }
         if (Objects.nonNull(classCredit)) {
             classCredit.setRegisOpening(classCreditDTO.getRegisOpening());
             classCredit.setRegisClosing(classCreditDTO.getRegisClosing());
@@ -371,9 +487,11 @@ public class MaintenanceDataImpl implements MaintenanceData {
     public Object submitTimeTable(SubmitTimeTableReq req) {
         List<TimeTable> timeTables = new ArrayList<>();
         List<LocalDateTime> weekDays = new ArrayList<>();
-        for (int i = 0; i< 5; i++) {
-            weekDays.add(LocalDateTime.of(2023,12, 11 + i,0,0,0));
-        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(req.getStartDate());
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        buildListDay(weekDays, dayOfWeek, req.getStartDate());
+
         Schedule schedule = null;
         if (Objects.nonNull(req)) {
             List<geneticalgorithm.Classroom> classrooms = new ArrayList<>();
@@ -381,6 +499,31 @@ public class MaintenanceDataImpl implements MaintenanceData {
             List<Professor> professors = new ArrayList<>();
             List<Course> courses = new ArrayList<>();
             List<Studentgroup> studentGroups = new ArrayList<>();
+            List<Long> classIds = new ArrayList<>();
+
+            // set professors & course
+            req.getListSubjects().forEach(x -> {
+                ClassCredit classCredit = classCreditRepository.findById(x).orElse(null);
+                if (Objects.isNull(classCredit)) {
+                    throw new RuntimeException("Cannot find LTC!");
+                }
+                classIds.add(classCredit.getStudentClassId());
+                classCredit.getSubject().getLecturers().forEach(lec -> {
+                    if (professors.stream().noneMatch(pro -> (pro.getProfessorId() == lec.getLecturerId()))) {
+                        Professor professor = new Professor(Math.toIntExact(lec.getLecturerId()),lec.getProfile().getFullName());
+                        professors.add(professor);
+                    }
+                });
+                int[] lecturerIds = classCredit.getSubject().getLecturers().stream().mapToInt(e -> (int) Integer.valueOf(e.getLecturerId().toString())).toArray();
+                Course course = new Course(
+                        Integer.valueOf(classCredit.getClassCreditId().toString()),
+                        classCredit.getSubject().getSubjectCode(),
+                        classCredit.getSubject().getName(),
+                        lecturerIds
+                );
+                courses.add(course);
+            });
+            req.setListClass(classIds);
             // set group
             if (Objects.nonNull(req.getListClass())) {
                 List<Class> listStudentClass = classRepository.findAllByClassIdIn(req.getListClass());
@@ -403,27 +546,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
             }
             // set Time slot
 
-            // set professors & course
-            req.getListSubjects().forEach(x -> {
-                ClassCredit classCredit = classCreditRepository.findById(x).orElse(null);
-                if (Objects.isNull(classCredit)) {
-                    throw new RuntimeException("Cannot find LTC!1");
-                }
-                classCredit.getSubject().getLecturers().forEach(lec -> {
-                    if (professors.stream().noneMatch(pro -> (pro.getProfessorId() == lec.getLecturerId()))) {
-                        Professor professor = new Professor(Math.toIntExact(lec.getLecturerId()),lec.getProfile().getFullName());
-                        professors.add(professor);
-                    }
-                });
-                int[] lecturerIds = classCredit.getSubject().getLecturers().stream().mapToInt(e -> (int) Integer.valueOf(e.getLecturerId().toString())).toArray();
-                Course course = new Course(
-                        Integer.valueOf(classCredit.getClassCreditId().toString()),
-                        classCredit.getSubject().getSubjectCode(),
-                        classCredit.getSubject().getName(),
-                        lecturerIds
-                );
-                courses.add(course);
-            });
+            //
             try {
                 schedule = buildSchedule(initializeSchedule(classrooms,
                         timeslots,
@@ -460,19 +583,25 @@ public class MaintenanceDataImpl implements MaintenanceData {
             classCredit.setLecturer(lecturer);
             classCredit.setClassrooms(List.of(classroom));
             // todo filter slot by day and group it
-            TimeTable timeTable = TimeTable.builder()
-                    .status(Boolean.TRUE)
-                    .classCredit(classCredit)
-                    .classroom(classroom)
-                    .lessonDate(weekDays.get(dayIndex).withHour(shiftSystem.getTimeStart().getHour()).withMinute(shiftSystem.getTimeStart().getMinute()))
-                    .shiftSystems(List.of(shiftSystem))
-                    .build();
-            timeTables.add(timeTable);
+            LocalDateTime dateTime = weekDays.get(dayIndex);
+            int noOfWeeks = classCredit.getSubject().getTheoryNum() + classCredit.getSubject().getPracticalNum();
+            noOfWeeks = noOfWeeks%2 ==0 ? noOfWeeks/2 : (noOfWeeks/2) + 1;
+            for (int i = 0; i < noOfWeeks; i++) {
+                TimeTable timeTable = TimeTable.builder()
+                        .status(Boolean.TRUE)
+                        .classCredit(classCredit)
+                        .classroom(classroom)
+                        .lessonDate(dateTime.plusDays(i * 7).withHour(shiftSystem.getTimeStart().getHour()).withMinute(shiftSystem.getTimeStart().getMinute()))
+                        .shiftSystems(List.of(shiftSystem))
+                        .build();
+                timeTables.add(timeTable);
+            }
             classIndex++;
         }
         List<TimeTableDTO> res = MaintenanceMapper.INSTANCE.toTimeTableDTO(timeTables);
         for (int i = 0; i < res.size(); i++) {
             TimeTableDTO dto = res.get(i);
+            dto.setIndex(i);
             dto.setId((long) i + 1);
             dto.setTitle(dto.getClassCredit().getSubject().getName() +
                     "\n" + "Phòng: " + dto.getClassroom().getName() +
@@ -482,6 +611,61 @@ public class MaintenanceDataImpl implements MaintenanceData {
             dto.setEnd(dto.getLessonDate().withHour(dto.getShiftSystems().get(0).getTimeClose().getHour()).withMinute(dto.getShiftSystems().get(0).getTimeClose().getMinute()));
         }
         return res;
+    }
+
+    private void buildListDay(List<LocalDateTime> weekDays, int dayOfWeek, Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        switch (dayOfWeek) {
+            case 1:
+                for (int i = 0; i< 5; i++) {
+                    weekDays.add(LocalDateTime.of(year,month, day + 1 + i,0,0,0));
+                }
+                break;
+            case 2:
+                for (int i = 0; i< 5; i++) {
+                    weekDays.add(LocalDateTime.of(year,month, day + i,0,0,0));
+                }
+                break;
+            case 3:
+                for (int i = 0; i< 4; i++) {
+                    weekDays.add(LocalDateTime.of(year,month, day + i,0,0,0));
+                }
+                weekDays.add(LocalDateTime.of(year,month, day + 6,0,0,0));
+                break;
+            case 4:
+                for (int i = 0; i< 3; i++) {
+                    weekDays.add(LocalDateTime.of(year,month, day + i,0,0,0));
+                }
+                weekDays.add(LocalDateTime.of(year,month, day + 5,0,0,0));
+                weekDays.add(LocalDateTime.of(year,month, day + 6,0,0,0));
+                break;
+            case 5:
+                for (int i = 0; i< 2; i++) {
+                    weekDays.add(LocalDateTime.of(year,month, day + i,0,0,0));
+                }
+                weekDays.add(LocalDateTime.of(year,month, day + 4,0,0,0));
+                weekDays.add(LocalDateTime.of(year,month, day + 5,0,0,0));
+                weekDays.add(LocalDateTime.of(year,month, day + 6,0,0,0));
+                break;
+            case 6:
+                for (int i = 0; i< 1; i++) {
+                    weekDays.add(LocalDateTime.of(year,month, day + i,0,0,0));
+                }
+                weekDays.add(LocalDateTime.of(year,month, day + 3,0,0,0));
+                weekDays.add(LocalDateTime.of(year,month, day + 4,0,0,0));
+                weekDays.add(LocalDateTime.of(year,month, day + 5,0,0,0));
+                weekDays.add(LocalDateTime.of(year,month, day + 6,0,0,0));
+                break;
+            case 7:
+                for (int i = 0; i< 5; i++) {
+                    weekDays.add(LocalDateTime.of(year,month, day + 2 + i,0,0,0));
+                }
+                break;
+        }
     }
 
     @Override
@@ -498,25 +682,77 @@ public class MaintenanceDataImpl implements MaintenanceData {
     }
 
     @Override
+    @Transactional
     public List<TimeTableDTO> saveTimetable(SaveTimetableReq req) {
+        List<ShiftSystem> shiftSystems = shiftSystemRepository.findAll();
+        for(int i = 0; i < req.getTimeTables().size(); i++) {
+            req.getTimeTables().get(i).setEnd(req.getEndDates().get(i).minusHours(7));
+            req.getTimeTables().get(i).setStart(req.getStartDates().get(i).minusHours(7));
+            req.getTimeTables().get(i).setLessonDate(req.getStartDates().get(i).minusHours(7));
+            int finalI = i;
+            AtomicBoolean validTime = new AtomicBoolean(false);
+            List<ShiftSystem> myKip = new ArrayList<>();
+            shiftSystems.forEach(x -> {
+                if (x.getTimeStart().toLocalTime().equals(req.getTimeTables().get(finalI).getLessonDate().toLocalTime())) {
+                    myKip.add(x);
+                    validTime.set(true);
+                }
+            });
+            req.getTimeTables().get(finalI).setShiftSystems(MaintenanceMapper.INSTANCE.toShiftSystemDTOS(myKip));
+            if (!validTime.get()) {
+                throw new RuntimeException("Thời gian không hợp lệ cho \n"+req.getTimeTables().get(i).getDescription());
+            }
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(req.getStartDate());
+            int dayOfW = calendar.get(Calendar.DAY_OF_WEEK);
+            if (dayOfW == 1 || dayOfW == 7) {
+                throw new RuntimeException("Không có kíp học cho thứ 7, chủ nhật\nThời gian không hợp lệ cho \n"+req.getTimeTables().get(i).getDescription());
+            }
+        }
+        // todo save SO TIET VAOF DATABASE
         List<TimeTable> timeTables = MaintenanceMapper.INSTANCE.toTimeTable(req.getTimeTables());
         if (!CollectionUtils.isEmpty(timeTables)) {
             try {
                 timeTables.forEach(x -> {
+                    TimeTable timeTable = null;
+                    List<LocalDateTime> dates = List.of(x.getLessonDate());
+                    // todo validate room
+                    timeTable = timeTableRepository.findFirstByLessonDateInAndClassroomAndStatus(dates, x.getClassroom(), true);
+                    if (Objects.nonNull(timeTable)) {
+                        throw new RuntimeException(timeTable.getLessonDate() + "\nPhòng học đã được sử dụng trong kip này!!\nLTC:" + timeTable.getClassCredit().getSubject().getName()
+                                + "\nID: " + timeTable.getClassCredit().getClassCreditId());
+                    }
+                    // todo validate lecturer
+                    timeTable = timeTableRepository.findFirstByLessonDateInAndClassCredit_LecturerAndStatus(dates, x.getClassCredit().getLecturer(), true);
+                    if (Objects.nonNull(timeTable)) {
+                        throw new RuntimeException(timeTable.getLessonDate() + "\nGiảng viên đã có tiết trong kip này!!\nLTC:" + timeTable.getClassCredit().getSubject().getName()
+                                + "\nID: " + timeTable.getClassCredit().getClassCreditId());
+                    }
+                    // todo validate student class
+                    timeTable = timeTableRepository.findFirstByLessonDateInAndClassCredit_StudentClassIdAndStatus(dates, x.getClassCredit().getStudentClassId(), true);
+                    if (Objects.nonNull(timeTable)) {
+                        throw new RuntimeException(timeTable.getLessonDate() + "\nLớp " + timeTable.getClassCredit().getStudentClassId() + " đã học trong kip này!!\nLTC:" + timeTable.getClassCredit().getSubject().getName()
+                                + "\nID: " + timeTable.getClassCredit().getClassCreditId());
+                    }
+                    // todo validate no of week
+
+                    //
+                    Lecturer myLecture = lecturerRepository.findById(x.getClassCredit().getLecturer().getLecturerId()).orElse(null);
+                    if (Objects.isNull(myLecture)) {
+                        throw new RuntimeException("Không tìm thấy giảng viên " + x.getClassCredit().getLecturer().getLecturerId());
+                    }
                     ClassCredit classCredit = classCreditRepository.findById(x.getClassCredit().getClassCreditId()).orElse(null);
                     classCredit.setDateStart(req.getStartDate());
+                    classCredit.setMaxSize(x.getClassroom().getMaxSize());
+                    classCredit.setStatus(StatusEnum.ACTIVE.name());
+                    classCredit.setLecturer(myLecture);
                     classCreditRepository.save(classCredit);
-                    // todo validate room
+                    x.setStatus(Boolean.TRUE);
 
-                    // todo validate lecturer
-
-                    // todo validate student class
-
-                    // todo validate no of week
 
                 });
             } catch (Exception e) {
-                throw new RuntimeException("Lỗi khi validate field \n" + e.getMessage());
+                throw new RuntimeException("Không thể tạo bởi vì \n" + e.getMessage());
             }
 
         }
@@ -534,10 +770,54 @@ public class MaintenanceDataImpl implements MaintenanceData {
             request = SearchRequest.builder()
                     .build();
         }
+        if (CollectionUtils.isEmpty(request.getFilters())) {
+            request.setFilters(List.of(FilterRequest.builder()
+                    .key("status")
+                    .operator(Operator.EQUAL)
+                    .fieldType(FieldType.BOOLEAN)
+                    .value(Boolean.TRUE)
+                    .build()));
+        }
         SearchSpecification<TimeTable> specification = new SearchSpecification<>(request);
         Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
         Page<TimeTable> entities = timeTableRepository.findAll(specification, pageable);
-        List<TimeTableDTO> res = entities.map(MaintenanceMapper.INSTANCE::toTimeTableDTO).stream().collect(Collectors.toList());
+        List<TimeTable> timeTables = entities.toList();
+        timeTables = timeTables.stream().filter(timeTable -> {
+            boolean b = !timeTable.getClassCredit().getStatus().equalsIgnoreCase(StatusEnum.CANCELLED.name());
+            return b;
+        }).collect(Collectors.toList());
+        List<TimeTable> filterTKB = new ArrayList<>();
+        if (Objects.nonNull(request.getUserName()) && Objects.nonNull(request.getRole())) {
+            switch (request.getRole()) {
+                case "student":
+                    Student student = studentRepository.findStudentByAccount_Username(request.getUserName());
+                    if (Objects.isNull(student)) {
+                        throw new RuntimeException("không tìm thấy sinh vien");
+                    }
+                    timeTables.forEach(x -> {
+                        ClassCreditsStudents dkm = classCreditsStudentsRepository.findFirstByClassCreditAndStudent(x.getClassCredit(), student);
+                        if (Objects.nonNull(dkm) && dkm.getStatus().equalsIgnoreCase(StatusEnum.ACTIVE.name())) {
+                            filterTKB.add(x);
+                        }
+                    });
+                    break;
+                case "lecturer":
+                    Lecturer lecturer = lecturerRepository.findByAccount_Username(request.getUserName());
+                    if (Objects.isNull(lecturer)) {
+                        throw new RuntimeException("không tìm thấy giảng viên");
+                    }
+                    timeTables.forEach(x -> {
+                        if (Objects.nonNull(x.getClassCredit().getLecturer()) && (x.getClassCredit().getLecturer().getLecturerId() == lecturer.getLecturerId())) {
+                            filterTKB.add(x);
+                        }
+                    });
+                    break;
+                case "employee":
+                    filterTKB.addAll(timeTables);
+                    break;
+            }
+        }
+        List<TimeTableDTO> res = MaintenanceMapper.INSTANCE.toTimeTableDTO(filterTKB);
         res.forEach(dto -> {
             dto.setTitle(dto.getClassCredit().getSubject().getName() +
                     "\n" + "Phòng: " + dto.getClassroom().getName() +
@@ -546,7 +826,125 @@ public class MaintenanceDataImpl implements MaintenanceData {
             dto.setStart(dto.getLessonDate());
             dto.setEnd(dto.getLessonDate().withHour(dto.getShiftSystems().get(0).getTimeClose().getHour()).withMinute(dto.getShiftSystems().get(0).getTimeClose().getMinute()));
         });
+
         return res;
+    }
+
+    @Override
+    public CurriculumDTO addCCDT(CurriculumDTO request) {
+        List<Subject> subjects = subjectRepository.findSubjectsBySubjectIdIn(request.getSubjectIds());
+        Faculty faculty = facultyRepository.findById(request.getFacultyId()).orElse(null);
+        if (Objects.isNull(faculty) || CollectionUtils.isEmpty(subjects)) {
+            throw new RuntimeException("Danh sach mon hoc rong, hoac khoa khong ton tai!!");
+        }
+        Curriculum exist = curriculumRepository.findFirstByFaculty(faculty);
+        if (Objects.nonNull(exist) && Objects.nonNull(exist.getCurriculumId())) {
+            request.setCurriculumId(exist.getCurriculumId());
+            exist.getSubjects().forEach(x -> {
+                if (!subjects.contains(x)) {
+                    subjects.add(x);
+                }
+            });
+        }
+        Curriculum curriculum = new Curriculum();
+        curriculum.setCurriculumId(request.getCurriculumId());
+        curriculum.setName(request.getName());
+        curriculum.setFaculty(faculty);
+        curriculum.setSubjects(subjects);
+        curriculum.setNumSubject(subjects.size());
+
+        curriculumRepository.save(curriculum);
+        return request;
+    }
+
+    @Override
+    public Object registerSubmit(SubmitSubjectRequest request) {
+        try {
+            String saveStatus = request.getStatus() ? StatusEnum.ACTIVE.name() : StatusEnum.INACTIVE.name();
+            ClassCredit classCredit = classCreditRepository.findById(request.getClassCredit().getClassCreditId()).orElse(null);
+            Student student = studentRepository.findStudentByAccount_Username(request.getUserName());
+            Subject thisSubject = classCredit.getSubject();
+            List<ClassCredit> classCreditSubject = classCreditRepository.findAllBySubjectAndStatus(thisSubject, StatusEnum.ACTIVE.name());
+            classCreditSubject.forEach(x -> {
+                ClassCreditsStudents dkm = classCreditsStudentsRepository.findFirstByClassCreditAndStudent(x, student);
+                if (Objects.nonNull(dkm) && dkm.getStatus().equalsIgnoreCase(StatusEnum.ACTIVE.name())) {
+                    if (x.getSemester().getYear() == classCredit.getSemester().getYear()) {
+                        throw new RuntimeException("Môn " + thisSubject.getName() + " đã học trong năm " + classCredit.getSemester().getYear());
+                    }
+                }
+            });
+            if (Objects.isNull(student) || Objects.isNull(classCredit)) {
+                throw new RuntimeException("");
+            }
+            if (saveStatus.equalsIgnoreCase(StatusEnum.ACTIVE.name())) {
+                validateStudentClassCredit(student, classCredit);
+            }
+            ClassCreditsStudents dkm = classCreditsStudentsRepository.findFirstByClassCreditAndStudent(classCredit, student);
+            if (Objects.nonNull(dkm)) {
+                dkm.setStatus(saveStatus);
+            } else {
+                dkm = new ClassCreditsStudents();
+                dkm.setStudent(student);
+                dkm.setClassCredit(classCredit);
+                dkm.setStatus(saveStatus);
+            }
+            classCreditsStudentsRepository.save(dkm);
+
+        } catch (RuntimeException exception) {
+            throw exception;
+        } catch (Exception ex) {
+            throw new RuntimeException("Lỗi!!\nVui lòng thử lại.");
+        }
+
+        return request;
+    }
+
+    @Override
+    @Transactional
+    public Object triggerDKMonHoc() {
+        List<ClassCredit> classCredits = classCreditRepository.findAllByStatus(StatusEnum.ACTIVE.name());
+        classCredits.forEach(x -> {
+            if (x.getStatus().equalsIgnoreCase(StatusEnum.ACTIVE.name()) && x.getRegisClosing().before(new Date())) {
+                List<ClassCreditsStudents> dk = classCreditsStudentsRepository.findAllByClassCreditAndStatus(x, StatusEnum.ACTIVE.name());
+                if (dk.size() >= x.getMinSize()) {
+                    x.setStatus(StatusEnum.IN_PROGRESS.name());
+                } else {
+                    x.setStatus(StatusEnum.CANCELLED.name());
+                }
+                classCreditRepository.save(x);
+            }
+
+        });
+        return null;
+    }
+
+    private void validateStudentClassCredit(Student student, ClassCredit classCredit) {
+        // check mon hoc tien quyet
+        if (Objects.nonNull(classCredit.getSubject().getPrerequisite())) {
+            List<ClassCredit> pps = classCreditRepository.findAllBySubject(classCredit.getSubject().getPrerequisite());
+            ClassCreditsStudents dkm = classCreditsStudentsRepository.findFirstByStudentAndStatusAndClassCreditIn(student, StatusEnum.COMPLETED.name(), pps);
+            if (Objects.isNull(dkm)) {
+                throw new RuntimeException("Ban cần hoàn thành môn " + classCredit.getSubject().getPrerequisite().getName() + " trước!!");
+            }
+        }
+        // check trùng lịch
+        SearchRequest searchRequest = SearchRequest.builder()
+                .userName(student.getAccount().getUsername())
+                .role("student")
+                .build();
+        List<LocalDateTime> dateTimes = timeTableRepository.findByClassCredit(classCredit).stream().map(TimeTable::getLessonDate).collect(Collectors.toList());
+        List<TimeTableDTO> tkbs = retrieveTimetable(searchRequest);
+        if (!CollectionUtils.isEmpty(tkbs)) {
+            tkbs.forEach(x -> {
+                if (dateTimes.contains(x.getLessonDate())) {
+                    throw new RuntimeException("Bạn bị trùng lịch với môn "+ x.getClassCredit().getSubject().getName());
+                }
+            });
+        }
+        // check full slot
+        if (classCreditsStudentsRepository.findAllByClassCredit(classCredit).size() >= classCredit.getMaxSize()) {
+            throw new RuntimeException("Số lượng đã hết");
+        }
     }
 
     private Subject buildRreRequisiteSubject(String subjectCode) {

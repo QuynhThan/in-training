@@ -51,4 +51,5 @@ public interface MaintenanceService {
     List<TimeTableDTO> saveTimetable(SaveTimetableReq req);
 
     List<TimeTableDTO> retrieveTimetable(SearchRequest req);
+
 }

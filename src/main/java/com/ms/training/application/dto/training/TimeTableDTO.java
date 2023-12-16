@@ -30,4 +30,5 @@ public class TimeTableDTO {
     private String description;
     private LocalDateTime start;
     private LocalDateTime end;
+    private int index;
 }
