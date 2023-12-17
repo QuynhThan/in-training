@@ -23,7 +23,7 @@ public class Lecturer {
     private Long lecturerId;
 
     @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
-    @JoinColumn(name = "faculty_id",referencedColumnName = "faculty_id")
+    @JoinColumn(name = "faculty_code",referencedColumnName = "faculty_code")
     private Faculty faculty;
 
     @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)

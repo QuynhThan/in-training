@@ -28,14 +28,14 @@ public class ClassCredit {
     @Column(name = "status")
     private String status;
 
-    @Column(name = "regis_opening")
-    private Date regisOpening;
-
-    @Column(name = "regis_closing")
-    private Date regisClosing;
-
-    @Column(name = "date_start")
-    private Date dateStart;
+//    @Column(name = "regis_opening")
+//    private Date regisOpening;
+//
+//    @Column(name = "regis_closing")
+//    private Date regisClosing;
+//
+//    @Column(name = "date_start")
+//    private Date dateStart;
 
     @Column(name = "student_class_id")
     private Long studentClassId;
@@ -48,13 +48,13 @@ public class ClassCredit {
     @JoinColumn(name = "semester_id",referencedColumnName = "semester_id")
     private Semester semester;
 
-    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
-    @JoinColumn(name = "lecturer_id",referencedColumnName = "lecturer_id")
-    private Lecturer lecturer;
+//    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+//    @JoinColumn(name = "lecturer_id",referencedColumnName = "lecturer_id")
+//    private Lecturer lecturer;
 
-    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
-    @JoinColumn(name = "faculty_id",referencedColumnName = "faculty_id")
-    private Faculty faculty; // theo mon hoc
+//    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+//    @JoinColumn(name = "faculty_id",referencedColumnName = "faculty_id")
+//    private Faculty faculty; // theo mon hoc
 
 //    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
 //    @JoinColumn(name = "class_id",referencedColumnName = "class_id")
@@ -79,4 +79,10 @@ public class ClassCredit {
             joinColumns = @JoinColumn(name = "class_credit_id"),
             inverseJoinColumns = @JoinColumn(name = "classroom_id"))
     private List<Classroom> classrooms;
+
+    @ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+    @JoinTable(name = "class_credit_lecturer",
+            joinColumns = @JoinColumn(name = "class_credit_id"),
+            inverseJoinColumns = @JoinColumn(name = "lecturer_id"))
+    private List<Lecturer> lecturers;
 }

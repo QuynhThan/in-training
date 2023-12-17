@@ -22,7 +22,7 @@ public class Curriculum {
     private Integer numSubject;
 
     @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
-    @JoinColumn(name = "faculty_id",referencedColumnName = "faculty_id")
+    @JoinColumn(name = "faculty_code",referencedColumnName = "faculty_code")
     private Faculty faculty;
 
     @ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)

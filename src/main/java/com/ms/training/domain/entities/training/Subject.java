@@ -37,9 +37,9 @@ public class Subject {
     @Column(name = "academic_year")
     private String academicYear;
 
-    @ManyToOne
-    @JoinColumn(name = "prerequisite_id")
-    private Subject prerequisite;
+//    @ManyToOne
+//    @JoinColumn(name = "prerequisite_id")
+//    private Subject prerequisite;
 
     @ManyToMany(mappedBy = "subjects")
     private List<Curriculum> curriculums;
@@ -56,6 +56,12 @@ public class Subject {
             joinColumns = @JoinColumn(name = "subject_id"),
             inverseJoinColumns = @JoinColumn(name = "lecturer_id"))
     private List<Lecturer> lecturers;
+
+    @ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+    @JoinTable(name = "subject_presubjects",
+            joinColumns = @JoinColumn(name = "subject_id"),
+            inverseJoinColumns = @JoinColumn(name = "presubject_id"))
+    private List<Subject> subjects;
 //
 //    @OneToMany(fetch=FetchType.LAZY,mappedBy = "subject",cascade=CascadeType.ALL)
 //    private List<ComponentSubject> componentSubjects;

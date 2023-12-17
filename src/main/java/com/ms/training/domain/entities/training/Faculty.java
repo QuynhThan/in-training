@@ -10,14 +10,15 @@ import java.util.List;
 @Table(name = "faculty")
 @Data
 public class Faculty {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "faculty_id")
-    private Long facultyId;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @Column(name = "faculty_id")
+//    private Long facultyId;
 
     @Column(name = "name")
     private String name;
 
+    @Id
     @Column(name = "faculty_code")
     private String facultyCode;
 

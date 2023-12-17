@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -30,6 +31,15 @@ public class Semester {
 
     @Column(name = "num")
     private Integer num;
+
+    @Column(name = "regis_opening")
+    private Date regisOpening;
+
+    @Column(name = "regis_closing")
+    private Date regisClosing;
+
+    @Column(name = "date_start")
+    private Date dateStart;
 
     @OneToMany(fetch = FetchType.LAZY,mappedBy = "semester")
     private List<BehaviorSheet> bSheets;

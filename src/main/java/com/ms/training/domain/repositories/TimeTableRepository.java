@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface TimeTableRepository extends JpaRepository<TimeTable, Long>, JpaSpecificationExecutor<TimeTable> {
     TimeTable findFirstByLessonDateInAndClassroomAndStatus(List<LocalDateTime> dates, Classroom classroom, Boolean status);
-    TimeTable findFirstByLessonDateInAndClassCredit_LecturerAndStatus(List<LocalDateTime> dates, Lecturer lecturer, Boolean status);
+//    TimeTable findFirstByLessonDateInAndClassCredit_LecturersAndStatus(List<LocalDateTime> dates, Lecturer lecturer, Boolean status);
     TimeTable findFirstByLessonDateInAndClassCredit_StudentClassIdAndStatus(List<LocalDateTime> dates, Long studentClassId, Boolean status);
     TimeTable findFirstByLessonDateInAndClassCredit(List<LocalDateTime> dates, ClassCredit classCredit);
     List<TimeTable> findByClassCredit(ClassCredit classCredit);

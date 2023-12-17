@@ -25,7 +25,7 @@ public class Class {
     private List<Student> students;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "faculty_id",referencedColumnName = "faculty_id")
+    @JoinColumn(name = "faculty_code",referencedColumnName = "faculty_code")
     private Faculty faculty;
 
 }
