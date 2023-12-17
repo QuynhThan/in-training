@@ -865,14 +865,16 @@ public class MaintenanceDataImpl implements MaintenanceData {
             Student student = studentRepository.findStudentByAccount_Username(request.getUserName());
             Subject thisSubject = classCredit.getSubject();
             List<ClassCredit> classCreditSubject = classCreditRepository.findAllBySubjectAndStatus(thisSubject, StatusEnum.ACTIVE.name());
-            classCreditSubject.forEach(x -> {
-                ClassCreditsStudents dkm = classCreditsStudentsRepository.findFirstByClassCreditAndStudent(x, student);
-                if (Objects.nonNull(dkm) && dkm.getStatus().equalsIgnoreCase(StatusEnum.ACTIVE.name())) {
-                    if (x.getSemester().getYear() == classCredit.getSemester().getYear()) {
-                        throw new RuntimeException("Môn " + thisSubject.getName() + " đã học trong năm " + classCredit.getSemester().getYear());
+            if (saveStatus.equalsIgnoreCase(StatusEnum.ACTIVE.name())) {
+                classCreditSubject.forEach(x -> {
+                    ClassCreditsStudents dkm = classCreditsStudentsRepository.findFirstByClassCreditAndStudent(x, student);
+                    if (Objects.nonNull(dkm) && dkm.getStatus().equalsIgnoreCase(StatusEnum.ACTIVE.name())) {
+                        if (x.getSemester().getYear() == classCredit.getSemester().getYear()) {
+                            throw new RuntimeException("Môn " + thisSubject.getName() + " đã học trong năm " + classCredit.getSemester().getYear());
+                        }
                     }
-                }
-            });
+                });
+            }
             if (Objects.isNull(student) || Objects.isNull(classCredit)) {
                 throw new RuntimeException("");
             }
