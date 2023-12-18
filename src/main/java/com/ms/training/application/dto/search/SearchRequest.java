@@ -25,6 +25,7 @@ public class SearchRequest {
     private Integer page;
 
     private Integer size;
+    private Long semesterId;
 
     public List<FilterRequest> getFilters() {
         if (Objects.isNull(this.filters)) return new ArrayList<>();

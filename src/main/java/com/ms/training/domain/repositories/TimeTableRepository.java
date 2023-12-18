@@ -16,5 +16,7 @@ public interface TimeTableRepository extends JpaRepository<TimeTable, Long>, Jpa
     TimeTable findFirstByLessonDateInAndClassCredit_StudentClassIdAndStatus(List<LocalDateTime> dates, Long studentClassId, Boolean status);
     TimeTable findFirstByLessonDateInAndClassCredit(List<LocalDateTime> dates, ClassCredit classCredit);
     List<TimeTable> findByClassCredit(ClassCredit classCredit);
+    List<TimeTable> findByClassCreditAndStatus(ClassCredit classCredit, Boolean status);
+
 
 }

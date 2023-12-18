@@ -79,4 +79,10 @@ public class ClassCredit {
             joinColumns = @JoinColumn(name = "class_credit_id"),
             inverseJoinColumns = @JoinColumn(name = "classroom_id"))
     private List<Classroom> classrooms;
+
+    @ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+    @JoinTable(name = "classcredit_lecturer",
+            joinColumns = @JoinColumn(name = "class_credit_id"),
+            inverseJoinColumns = @JoinColumn(name = "lecturer_id"))
+    private List<Lecturer> lecturers;
 }

@@ -116,6 +116,11 @@ public class MaintenanceController {
         return new ResponseEntity<>(maintenanceService.addClassCredit(classCreditDTO), HttpStatus.OK);
     }
 
+    @PostMapping("/class-credit-maintenance/phan-cong")
+    public ResponseEntity<ClassCreditDTO> phanMonGV(@RequestBody ClassCreditDTO classCreditDTO){
+        return new ResponseEntity<>(maintenanceService.phanMonGV(classCreditDTO), HttpStatus.OK);
+    }
+
     @PostMapping("/class-credit-maintenance/update")
     public ResponseEntity<ClassCreditDTO> updateClassCredit(@RequestBody ClassCreditDTO classCreditDTO){
         return new ResponseEntity<>(maintenanceService.updateClassCredit(classCreditDTO), HttpStatus.OK);
@@ -149,5 +154,10 @@ public class MaintenanceController {
     @PostMapping("/trigger/lop-tin-chi")
     public ResponseEntity<Object> triggerLTC(@RequestBody(required = false) SearchRequest req) {
         return new ResponseEntity<>(maintenanceData.triggerDKMonHoc(), HttpStatus.OK);
+    }
+
+    @PostMapping("/semester/retrieve")
+    public ResponseEntity<Object> semesterRetrieve(@RequestBody(required = false) SearchRequest req) {
+        return new ResponseEntity<>(maintenanceData.semesterRetrieve(req), HttpStatus.OK);
     }
 }

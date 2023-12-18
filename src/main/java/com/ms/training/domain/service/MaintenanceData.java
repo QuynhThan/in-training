@@ -60,4 +60,8 @@ public interface MaintenanceData {
     Object registerSubmit(SubmitSubjectRequest request);
 
     Object triggerDKMonHoc();
+
+    ClassCreditDTO phanMonGV(ClassCreditDTO classCreditDTO);
+
+    Object semesterRetrieve(SearchRequest req);
 }

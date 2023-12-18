@@ -37,4 +37,5 @@ public interface MaintenanceMapper {
     ProfileDTO toProfileDTO(Profile profile);
     MyClassDTO toMyClassDTO(Class c);
     List<ShiftSystemDTO> toShiftSystemDTOS(List<ShiftSystem> shiftSystems);
+    List<SemesterDTO> toSemesterDTOs(List<Semester> semesters);
 }

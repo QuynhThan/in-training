@@ -49,6 +49,20 @@ public class ScheduleAlgo {
             schedule.addTimeslot(19, "Wednesday 15:00 - 17:00");
             schedule.addTimeslot(20, "Thursday 15:00 - 17:00");
         }
+//        if (CollectionUtils.isEmpty(timeslots)) {
+//            schedule.addTimeslot(1, "Monday Mor");
+//            schedule.addTimeslot(2, "Monday Noon");
+//            schedule.addTimeslot(3, "Tuesday Mor");
+//            schedule.addTimeslot(4, "Tuesday Noon");
+//            schedule.addTimeslot(5, "Wednesday Mor");
+//            schedule.addTimeslot(6, "Wednesday Noon");
+//            schedule.addTimeslot(7, "Thursday Mor");
+//            schedule.addTimeslot(8, "Thursday Noon");
+//            schedule.addTimeslot(9, "Friday Mor");
+//            schedule.addTimeslot(10, "Friday Noon");
+//            schedule.addTimeslot(11, "Saturday Mor");
+//            schedule.addTimeslot(12, "Saturday Noon");
+//        }
         return schedule;
     }
 

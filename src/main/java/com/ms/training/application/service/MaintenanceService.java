@@ -52,4 +52,5 @@ public interface MaintenanceService {
 
     List<TimeTableDTO> retrieveTimetable(SearchRequest req);
 
+    ClassCreditDTO phanMonGV(ClassCreditDTO classCreditDTO);
 }

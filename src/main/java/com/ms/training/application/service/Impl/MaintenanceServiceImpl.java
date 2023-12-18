@@ -134,4 +134,9 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     public List<TimeTableDTO> retrieveTimetable(SearchRequest req) {
         return maintenanceData.retrieveTimetable(req);
     }
+
+    @Override
+    public ClassCreditDTO phanMonGV(ClassCreditDTO classCreditDTO) {
+        return maintenanceData.phanMonGV(classCreditDTO);
+    }
 }

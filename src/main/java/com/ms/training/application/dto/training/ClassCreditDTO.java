@@ -51,4 +51,11 @@ public class ClassCreditDTO {
     private String gvName;
     @JsonProperty("subject.name")
     private String subjectN;
+    // phan mon
+    private boolean isPhanMon;
+    private String listGVStr;
+    private List<Long> listGV;
+    private List<LecturerDTO> lecturers;
+    private Long khoa;
+    private String className;
 }

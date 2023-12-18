@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.List;
 
 @Builder
@@ -17,5 +18,8 @@ public class SemesterDTO {
     private Integer year;
     private String name;
     private Integer num;
-    private List<BehaviorSheetDTO> bSheets;
+    private Date regisOpening;
+    private Date regisClosing;
+    private Date dateStart;
+//    private List<BehaviorSheetDTO> bSheets;
 }

@@ -85,8 +85,9 @@ public class MaintenanceDataImpl implements MaintenanceData {
             if (Objects.isNull(mySubject)) {
                 throw new RuntimeException("Invalid Subject!!");
             }
-            List<Lecturer> lecturers = lecturerRepository.findByLecturerIdIn(subjectDTO.getListGV());
-            mySubject.setLecturers(lecturers);
+
+//            List<Lecturer> lecturers = lecturerRepository.findByLecturerIdIn(subjectDTO.getListGV());
+//            mySubject.setLecturers(lecturers);
             try {
                 subjectRepository.save(mySubject);
             } catch (Exception exception) {
@@ -94,7 +95,12 @@ public class MaintenanceDataImpl implements MaintenanceData {
             }
             return MaintenanceMapper.INSTANCE.toSubjectDTO(mySubject);
         }
-
+        // 1 tins chir = 15 tietes
+        int totalTiet = subjectDTO.getCreditNum() * 15;
+        int totalInput = subjectDTO.getTheoryNum() + subjectDTO.getPracticalNum();
+        if (totalInput != totalTiet) {
+            throw new RuntimeException("Số tiết không hợp lệ!!!\n1 tín chỉ = 15 tiết");
+        }
         Subject subject = MaintenanceMapper.INSTANCE.toSubject(subjectDTO);
         if (Objects.nonNull(subjectRepository.findFirstBySubjectCode(subject.getSubjectCode()))) {
             throw new RuntimeException("Subject Code is existed!!");
@@ -229,7 +235,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
     @Override
     @Transactional
     public ClassCreditDTO addClassCredit(ClassCreditDTO classCreditDTO) {
-        validateClassCreditReq(classCreditDTO);
+        validateClassCreditReq(classCreditDTO, true);
         ClassCredit classCredit = MaintenanceMapper.INSTANCE.toClassCredit(classCreditDTO);
         Subject subject = subjectRepository.findById(classCreditDTO.getSubjectId()).orElse(null);
         Lecturer lecturer = lecturerRepository.findById(classCreditDTO.getLecturerId()).orElse(null);
@@ -275,8 +281,8 @@ public class MaintenanceDataImpl implements MaintenanceData {
         return classCreditDTO;
     }
 
-    private static void validateClassCreditReq(ClassCreditDTO classCreditDTO) {
-        if (classCreditDTO.getRegisOpening().after(classCreditDTO.getRegisClosing())) {
+    private void validateClassCreditReq(ClassCreditDTO classCreditDTO, boolean isAdd) {
+        if (Objects.nonNull(classCreditDTO.getRegisOpening()) && classCreditDTO.getRegisOpening().after(classCreditDTO.getRegisClosing())) {
             throw new RuntimeException("Ngày mở phải trước hạn");
         }
         // check input year
@@ -290,6 +296,18 @@ public class MaintenanceDataImpl implements MaintenanceData {
         if (classCreditDTO.getYear() == (thisYear - 1) && classCreditDTO.getSemesterNo() == 1) {
             throw new RuntimeException("Năm học không hợp lệ!!");
         }
+        // check class and group
+        if (isAdd) {
+            Semester semester = getSemester(classCreditDTO);
+            Subject subject = subjectRepository.findById(classCreditDTO.getSubjectId()).orElse(null);
+            Class stuClass = classRepository.findById(classCreditDTO.getLopHoc()).orElse(null);
+            ClassCredit classCredit = classCreditRepository.findFirstByStudentClassIdAndGroupNumberAndSemesterAndSubject(classCreditDTO.getLopHoc(), classCreditDTO.getGroupNumber(), semester, subject);
+
+            if (Objects.nonNull(classCredit)) {
+                throw new RuntimeException("Lớp " + stuClass.getName() + " Nhóm " + classCredit.getGroupNumber() + "\nĐã tồn tại trong hoc ky!!");
+            }
+        }
+
     }
 
     private Semester getSemester(ClassCreditDTO classCreditDTO) {
@@ -400,8 +418,15 @@ public class MaintenanceDataImpl implements MaintenanceData {
         Pageable pageable = SearchSpecification.getPageable(request.getPage(), request.getSize());
         Page<ClassCredit> entities = classCreditRepository.findAll(specification, pageable);
         List<ClassCredit> results = new ArrayList<>();
+        Semester semester = null;
+        if(Objects.nonNull(request.getSemesterId())) {
+            semester = semesterRepository.findById(request.getSemesterId()).orElse(null);
+        }
         if (Objects.nonNull(request.getUserName()) && request.getRole().equalsIgnoreCase("student")) {
             Student student = studentRepository.findStudentByAccount_Username(request.getUserName());
+            if(Objects.isNull(student)) {
+                throw new RuntimeException("Vui lòng F5 hoặc đăng nhập lại!!");
+            }
             Curriculum stuCurri = curriculumRepository.findFirstByFaculty(student.getAClass().getFaculty());
             for(ClassCredit classCredit : entities.getContent()) {
                 if (!classCredit.getSubject().getCurriculums().contains(stuCurri)) {
@@ -420,7 +445,14 @@ public class MaintenanceDataImpl implements MaintenanceData {
                     }
                 }
             }
-        } else {
+        } else if(Objects.nonNull(semester)) {
+            for (ClassCredit classCredit : entities.getContent()) {
+                if (classCredit.getSemester().getSemesterId() == semester.getSemesterId() && classCredit.getStatus().equalsIgnoreCase(StatusEnum.INACTIVE.name())) {
+                    results.add(classCredit);
+                }
+            }
+
+        }else {
             results.addAll(entities.getContent());
         }
 
@@ -429,9 +461,17 @@ public class MaintenanceDataImpl implements MaintenanceData {
             if (Objects.nonNull(x.getSemester())) {
                 x.setYear(x.getSemester().getYear());
                 x.setSemesterNo(x.getSemester().getNum());
+//                x.getSemester().setName(buildNameSemester());
+            }
+            x.setListGV(new ArrayList<>());
+            if (!CollectionUtils.isEmpty(x.getLecturers())) {
+                x.getLecturers().forEach(l -> {
+                    x.getListGV().add(l.getLecturerId());
+                });
             }
             Class myClass = classRepository.findById(x.getStudentClassId()).orElse(null);
             String className = Objects.nonNull(myClass) ? myClass.getName() : "";
+            x.setClassName(className);
             x.setShowDetails(x.getClassCreditId() + "-" +  x.getSubject().getName() +"-"+ className + "-" + x.getYear() + "-" + x.getSemesterNo());
         });
         return res;
@@ -454,7 +494,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         StatusEnum statusEnum = null;
         try {
             statusEnum = StatusEnum.valueOf(classCreditDTO.getStatus());
-            validateClassCreditReq(classCreditDTO);
+            validateClassCreditReq(classCreditDTO, false);
         } catch (RuntimeException exception) {
             throw exception;
         } catch (Exception e) {
@@ -491,7 +531,9 @@ public class MaintenanceDataImpl implements MaintenanceData {
         calendar.setTime(req.getStartDate());
         int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
         buildListDay(weekDays, dayOfWeek, req.getStartDate());
-
+        if (Objects.nonNull(req.getSemesterId())) {
+            handleSubmitTimeTableBySemester(req, true);
+        }
         Schedule schedule = null;
         if (Objects.nonNull(req)) {
             List<geneticalgorithm.Classroom> classrooms = new ArrayList<>();
@@ -507,14 +549,22 @@ public class MaintenanceDataImpl implements MaintenanceData {
                 if (Objects.isNull(classCredit)) {
                     throw new RuntimeException("Cannot find LTC!");
                 }
+                // set group
+                // add 1 LTC to 1 LOP
+                Class cl = classRepository.findById(classCredit.getStudentClassId()).orElse(null);
+                int classSize = Objects.nonNull(cl.getStudents()) ? cl.getStudents().size() : 0;
+                studentGroups.add(new Studentgroup(Math.toIntExact(cl.getClassId() + classCredit.getClassCreditId()), classSize, new int[]{Math.toIntExact(x)}));
+                //
+
                 classIds.add(classCredit.getStudentClassId());
-                classCredit.getSubject().getLecturers().forEach(lec -> {
+                classCredit.getLecturers().forEach(lec -> {
+                    // TODO CREATE TKB FOR CHECK 2 GVs
                     if (professors.stream().noneMatch(pro -> (pro.getProfessorId() == lec.getLecturerId()))) {
                         Professor professor = new Professor(Math.toIntExact(lec.getLecturerId()),lec.getProfile().getFullName());
                         professors.add(professor);
                     }
                 });
-                int[] lecturerIds = classCredit.getSubject().getLecturers().stream().mapToInt(e -> (int) Integer.valueOf(e.getLecturerId().toString())).toArray();
+                int[] lecturerIds = classCredit.getLecturers().stream().mapToInt(e -> (int) Integer.valueOf(e.getLecturerId().toString())).toArray();
                 Course course = new Course(
                         Integer.valueOf(classCredit.getClassCreditId().toString()),
                         classCredit.getSubject().getSubjectCode(),
@@ -525,13 +575,13 @@ public class MaintenanceDataImpl implements MaintenanceData {
             });
             req.setListClass(classIds);
             // set group
-            if (Objects.nonNull(req.getListClass())) {
-                List<Class> listStudentClass = classRepository.findAllByClassIdIn(req.getListClass());
-                listStudentClass.forEach(cl -> {
-                    int classSize = Objects.nonNull(cl.getStudents()) ? cl.getStudents().size() : 0;
-                    studentGroups.add(new Studentgroup(Math.toIntExact(cl.getClassId()), classSize, req.getListSubjects().stream().mapToInt(aa -> Math.toIntExact(aa)).toArray()));
-                });
-            }
+//            if (Objects.nonNull(req.getListClass())) {
+//                List<Class> listStudentClass = classRepository.findAllByClassIdIn(req.getListClass());
+//                listStudentClass.forEach(cl -> {
+//                    int classSize = Objects.nonNull(cl.getStudents()) ? cl.getStudents().size() : 0;
+//                    studentGroups.add(new Studentgroup(Math.toIntExact(cl.getClassId()), classSize, req.getListSubjects().stream().mapToInt(aa -> Math.toIntExact(aa)).toArray()));
+//                });
+//            }
             // set room
             if (CollectionUtils.isEmpty(req.getListRooms())) {
                 List<Classroom> classroomList = classroomRepository.findAll();
@@ -567,7 +617,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
         int classIndex = 1;
         for (geneticalgorithm.Class bestClass : classes) {
             Long ltc = (long) bestClass.getCourseId();
-            Long stdClass = (long) bestClass.getGroupId();
+            Long stdClass = (long) bestClass.getGroupId() - ltc;
             Long roomId = (long) bestClass.getRoomId();
             Long lectureId = (long) bestClass.getProfessorId();
             int dayIndex = bestClass.getTimeslotId() / 4;
@@ -585,32 +635,69 @@ public class MaintenanceDataImpl implements MaintenanceData {
             // todo filter slot by day and group it
             LocalDateTime dateTime = weekDays.get(dayIndex);
             int noOfWeeks = classCredit.getSubject().getTheoryNum() + classCredit.getSubject().getPracticalNum();
-            noOfWeeks = noOfWeeks%2 ==0 ? noOfWeeks/2 : (noOfWeeks/2) + 1;
+            noOfWeeks = getNoOfWeeks(noOfWeeks, false);
             for (int i = 0; i < noOfWeeks; i++) {
-                TimeTable timeTable = TimeTable.builder()
-                        .status(Boolean.TRUE)
-                        .classCredit(classCredit)
-                        .classroom(classroom)
-                        .lessonDate(dateTime.plusDays(i * 7).withHour(shiftSystem.getTimeStart().getHour()).withMinute(shiftSystem.getTimeStart().getMinute()))
-                        .shiftSystems(List.of(shiftSystem))
-                        .build();
-                timeTables.add(timeTable);
+                buildTimeTable(classCredit, classroom, dateTime, i, shiftSystem, timeTables);
             }
             classIndex++;
         }
         List<TimeTableDTO> res = MaintenanceMapper.INSTANCE.toTimeTableDTO(timeTables);
         for (int i = 0; i < res.size(); i++) {
             TimeTableDTO dto = res.get(i);
+            Class stuClass = classRepository.findById(dto.getClassCredit().getStudentClassId()).orElse(null);
+            String className = Objects.nonNull(stuClass) ? stuClass.getName() : "";
             dto.setIndex(i);
             dto.setId((long) i + 1);
             dto.setTitle(dto.getClassCredit().getSubject().getName() +
                     "\n" + "Phòng: " + dto.getClassroom().getName() +
-                    "\n" + "GV: " +  dto.getClassCredit().getLecturer().getProfile().getFullName());
+                    "\n" + "GV: " +  dto.getClassCredit().getLecturer().getProfile().getFullName() +
+                    "\n" + "Lớp: " + className +
+                    "\n" + "Nhóm: " + dto.getClassCredit().getGroupNumber());
             dto.setDescription(dto.getTitle());
             dto.setStart(dto.getLessonDate());
             dto.setEnd(dto.getLessonDate().withHour(dto.getShiftSystems().get(0).getTimeClose().getHour()).withMinute(dto.getShiftSystems().get(0).getTimeClose().getMinute()));
         }
         return res;
+    }
+
+    private void handleSubmitTimeTableBySemester(SubmitTimeTableReq req, boolean isSave) {
+        Semester semester = semesterRepository.findById(req.getSemesterId()).orElse(null);
+        if (Objects.nonNull(semester)) {
+//            req.getRegisOpening().setTime(); // start of day
+//            req.getRegisClosing().setTime(); // end of day
+            semester.setDateStart(req.getStartDate());
+            semester.setRegisClosing(req.getRegisClosing());
+            semester.setRegisOpening(req.getRegisOpening());
+            semesterRepository.save(semester);
+        }
+        List<ClassCredit> classCredits = classCreditRepository.findAllBySemesterAndStatus(semester, StatusEnum.INACTIVE.name());
+        req.setListSubjects(new ArrayList<>());
+        classCredits.forEach(x -> {
+            req.getListSubjects().add(x.getClassCreditId());
+            x.setRegisClosing(req.getRegisClosing());
+            x.setRegisOpening(req.getRegisOpening());
+            x.setDateStart(req.getStartDate());
+        });
+        if (isSave) {
+            classCreditRepository.saveAll(classCredits);
+        }
+    }
+
+    private static void buildTimeTable(ClassCredit classCredit, Classroom classroom, LocalDateTime dateTime, int i, ShiftSystem shiftSystem, List<TimeTable> timeTables) {
+        TimeTable timeTable = TimeTable.builder()
+                .status(Boolean.TRUE)
+                .classCredit(classCredit)
+                .classroom(classroom)
+                .lessonDate(dateTime.plusDays(i * 7).withHour(shiftSystem.getTimeStart().getHour()).withMinute(shiftSystem.getTimeStart().getMinute()))
+                .shiftSystems(List.of(shiftSystem))
+                .build();
+        timeTables.add(timeTable);
+    }
+
+    private static int getNoOfWeeks(int noOfWeeks, boolean isSave) {
+        if (!isSave)
+            return 1;
+        return noOfWeeks % 2 == 0 ? noOfWeeks / 2 : (noOfWeeks / 2) + 1;
     }
 
     private void buildListDay(List<LocalDateTime> weekDays, int dayOfWeek, Date date) {
@@ -713,6 +800,24 @@ public class MaintenanceDataImpl implements MaintenanceData {
         List<TimeTable> timeTables = MaintenanceMapper.INSTANCE.toTimeTable(req.getTimeTables());
         if (!CollectionUtils.isEmpty(timeTables)) {
             try {
+                List<TimeTable> added = new ArrayList<>();
+                for (TimeTable timeTable1 : timeTables) {
+                    ClassCredit ccTmp = classCreditRepository.findById(timeTable1.getClassCredit().getClassCreditId()).orElse(null);
+                    int noOfWeeks = ccTmp.getSubject().getTheoryNum() + ccTmp.getSubject().getPracticalNum();
+                    noOfWeeks = getNoOfWeeks(noOfWeeks, true) - 1;
+                    for (int i = 1; i <= noOfWeeks; i++) {
+                        TimeTable timeTable2 = TimeTable.builder()
+                                .status(timeTable1.getStatus())
+                                .shiftSystems(timeTable1.getShiftSystems())
+                                .lessonDate(timeTable1.getLessonDate().plusDays(i*7l))
+                                .classroom(timeTable1.getClassroom())
+                                .classCredit(timeTable1.getClassCredit())
+                                .build();
+                        added.add(timeTable2);
+                    }
+                }
+                timeTables.addAll(added);
+
                 timeTables.forEach(x -> {
                     TimeTable timeTable = null;
                     List<LocalDateTime> dates = List.of(x.getLessonDate());
@@ -729,11 +834,12 @@ public class MaintenanceDataImpl implements MaintenanceData {
                                 + "\nID: " + timeTable.getClassCredit().getClassCreditId());
                     }
                     // todo validate student class
-                    timeTable = timeTableRepository.findFirstByLessonDateInAndClassCredit_StudentClassIdAndStatus(dates, x.getClassCredit().getStudentClassId(), true);
-                    if (Objects.nonNull(timeTable)) {
-                        throw new RuntimeException(timeTable.getLessonDate() + "\nLớp " + timeTable.getClassCredit().getStudentClassId() + " đã học trong kip này!!\nLTC:" + timeTable.getClassCredit().getSubject().getName()
-                                + "\nID: " + timeTable.getClassCredit().getClassCreditId());
-                    }
+//                    List<TimeTableDTO> search = this.
+//                    timeTable = timeTableRepository.findFirstByLessonDateInAndClassCredit_StudentClassIdAndStatus(dates, x.getClassCredit().getStudentClassId(), true);
+//                    if (Objects.nonNull(timeTable)) {
+//                        throw new RuntimeException(timeTable.getLessonDate() + "\nLớp " + timeTable.getClassCredit().getStudentClassId() + " đã học trong kip này!!\nLTC:" + timeTable.getClassCredit().getSubject().getName()
+//                                + "\nID: " + timeTable.getClassCredit().getClassCreditId());
+//                    }
                     // todo validate no of week
 
                     //
@@ -748,7 +854,6 @@ public class MaintenanceDataImpl implements MaintenanceData {
                     classCredit.setLecturer(myLecture);
                     classCreditRepository.save(classCredit);
                     x.setStatus(Boolean.TRUE);
-
 
                 });
             } catch (Exception e) {
@@ -819,9 +924,13 @@ public class MaintenanceDataImpl implements MaintenanceData {
         }
         List<TimeTableDTO> res = MaintenanceMapper.INSTANCE.toTimeTableDTO(filterTKB);
         res.forEach(dto -> {
+            Class stuClass = classRepository.findById(dto.getClassCredit().getStudentClassId()).orElse(null);
+            String className = Objects.nonNull(stuClass) ? stuClass.getName() : "";
             dto.setTitle(dto.getClassCredit().getSubject().getName() +
                     "\n" + "Phòng: " + dto.getClassroom().getName() +
-                    "\n" + "GV: " +  dto.getClassCredit().getLecturer().getProfile().getFullName());
+                    "\n" + "GV: " +  dto.getClassCredit().getLecturer().getProfile().getFullName() +
+                    "\n" + "Lớp: " + className +
+                    "\n" + "Nhóm: " + dto.getClassCredit().getGroupNumber());
             dto.setDescription(dto.getTitle());
             dto.setStart(dto.getLessonDate());
             dto.setEnd(dto.getLessonDate().withHour(dto.getShiftSystems().get(0).getTimeClose().getHour()).withMinute(dto.getShiftSystems().get(0).getTimeClose().getMinute()));
@@ -920,6 +1029,45 @@ public class MaintenanceDataImpl implements MaintenanceData {
         return null;
     }
 
+    @Override
+    public ClassCreditDTO phanMonGV(ClassCreditDTO classCreditDTO) {
+        if (CollectionUtils.isEmpty(classCreditDTO.getListGV())) {
+            throw new RuntimeException("Danh sach giang vien rong");
+        }
+        ClassCredit classCredit = classCreditRepository.findById(classCreditDTO.getClassCreditId()).orElse(null);
+        List<Lecturer> lecturers = lecturerRepository.findByLecturerIdIn(classCreditDTO.getListGV());
+        if (CollectionUtils.isEmpty(lecturers)) {
+            throw new RuntimeException("Danh sach giang vien rong");
+        }
+        // TODO DUMMY set first lecturer for LTC
+        classCredit.setLecturer(lecturers.get(0));
+        classCredit.setLecturers(lecturers);
+        classCreditRepository.save(classCredit);
+        return classCreditDTO;
+    }
+
+    @Override
+    public Object semesterRetrieve(SearchRequest req) {
+        if (Objects.isNull(req)) {
+            req = SearchRequest.builder()
+                    .build();
+        }
+        SearchSpecification<Semester> specification = new SearchSpecification<>(req);
+        Pageable pageable = SearchSpecification.getPageable(req.getPage(), req.getSize());
+        Page<Semester> entities = semesterRepository.findAll(specification, pageable);
+        List<Semester> semesters = entities.toList();
+        semesters.forEach(x -> {
+            x.setName(buildNameSemester(x.getYear(), x.getNum()));
+        });
+        List<SemesterDTO> res = MaintenanceMapper.INSTANCE.toSemesterDTOs(semesters);
+        res.sort(Comparator.comparing(x -> x.getYear()));
+        return res;
+    }
+
+    private static String buildNameSemester(Integer year, Integer num) {
+        return "Năm học: " + year + " - " + (year + 1) + " -- Học kỳ: " + num;
+    }
+
     private void validateStudentClassCredit(Student student, ClassCredit classCredit) {
         // check mon hoc tien quyet
         if (Objects.nonNull(classCredit.getSubject().getPrerequisite())) {
@@ -934,7 +1082,7 @@ public class MaintenanceDataImpl implements MaintenanceData {
                 .userName(student.getAccount().getUsername())
                 .role("student")
                 .build();
-        List<LocalDateTime> dateTimes = timeTableRepository.findByClassCredit(classCredit).stream().map(TimeTable::getLessonDate).collect(Collectors.toList());
+        List<LocalDateTime> dateTimes = timeTableRepository.findByClassCreditAndStatus(classCredit, Boolean.TRUE).stream().map(TimeTable::getLessonDate).collect(Collectors.toList());
         List<TimeTableDTO> tkbs = retrieveTimetable(searchRequest);
         if (!CollectionUtils.isEmpty(tkbs)) {
             tkbs.forEach(x -> {
