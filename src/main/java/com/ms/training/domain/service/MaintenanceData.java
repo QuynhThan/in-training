@@ -64,4 +64,6 @@ public interface MaintenanceData {
     ClassCreditDTO phanMonGV(ClassCreditDTO classCreditDTO);
 
     Object semesterRetrieve(SearchRequest req);
+
+    List<StudentDTO> getDanhSachSV(ClassCreditDTO classCreditDTO);
 }

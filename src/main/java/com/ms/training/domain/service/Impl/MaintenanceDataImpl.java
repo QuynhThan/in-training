@@ -27,6 +27,8 @@ import org.springframework.util.CollectionUtils;
 
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -660,14 +662,37 @@ public class MaintenanceDataImpl implements MaintenanceData {
         return res;
     }
 
+    public static Date atStartOfDay(Date date) {
+        LocalDateTime localDateTime = dateToLocalDateTime(date);
+        LocalDateTime startOfDay = localDateTime.with(LocalTime.MIN);
+        return localDateTimeToDate(startOfDay);
+    }
+
+    public static Date atEndOfDay(Date date) {
+        LocalDateTime localDateTime = dateToLocalDateTime(date);
+        LocalDateTime endOfDay = localDateTime.with(LocalTime.MAX);
+        return localDateTimeToDate(endOfDay);
+    }
+
+    private static LocalDateTime dateToLocalDateTime(Date date) {
+        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+    }
+
+    private static Date localDateTimeToDate(LocalDateTime localDateTime) {
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
     private void handleSubmitTimeTableBySemester(SubmitTimeTableReq req, boolean isSave) {
         Semester semester = semesterRepository.findById(req.getSemesterId()).orElse(null);
         if (Objects.nonNull(semester)) {
-//            req.getRegisOpening().setTime(); // start of day
-//            req.getRegisClosing().setTime(); // end of day
+//            req.setRegisClosing(atStartOfDay(req.getRegisClosing())); // start of day
+//            req.setRegisOpening(atEndOfDay(req.getRegisOpening())); // end of day
             semester.setDateStart(req.getStartDate());
-            semester.setRegisClosing(req.getRegisClosing());
-            semester.setRegisOpening(req.getRegisOpening());
+            semester.setRegisClosing(atEndOfDay(req.getRegisClosing()));
+            semester.setRegisOpening(atStartOfDay(req.getRegisOpening()));
+            if (Objects.nonNull(semester.getRegisOpening()) && semester.getRegisOpening().after(semester.getRegisClosing())) {
+                throw new RuntimeException("Ngày mở phải trước hạn");
+            }
             semesterRepository.save(semester);
         }
         List<ClassCredit> classCredits = classCreditRepository.findAllBySemesterAndStatus(semester, StatusEnum.INACTIVE.name());
@@ -1061,6 +1086,18 @@ public class MaintenanceDataImpl implements MaintenanceData {
         });
         List<SemesterDTO> res = MaintenanceMapper.INSTANCE.toSemesterDTOs(semesters);
         res.sort(Comparator.comparing(x -> x.getYear()));
+        return res;
+    }
+
+    @Override
+    public List<StudentDTO> getDanhSachSV(ClassCreditDTO classCreditDTO) {
+        ClassCredit cc = classCreditRepository.findById(classCreditDTO.getClassCreditId()).orElse(null);
+        if (Objects.isNull(cc)) {
+            throw new RuntimeException("Khong tim thay lop tin chi");
+        }
+        List<ClassCreditsStudents> dkms = classCreditsStudentsRepository.findAllByClassCreditAndStatus(cc, StatusEnum.ACTIVE.name());
+        List<Student> students = dkms.stream().map(ClassCreditsStudents::getStudent).collect(Collectors.toList());
+        List<StudentDTO> res = MaintenanceMapper.INSTANCE.toStudentDTOs(students);
         return res;
     }
 

@@ -121,6 +121,11 @@ public class MaintenanceController {
         return new ResponseEntity<>(maintenanceService.phanMonGV(classCreditDTO), HttpStatus.OK);
     }
 
+    @PostMapping("/class-credit-maintenance/sinh-vien")
+    public ResponseEntity<List<StudentDTO>> getDanhSachSV(@RequestBody ClassCreditDTO classCreditDTO){
+        return new ResponseEntity<>(maintenanceData.getDanhSachSV(classCreditDTO), HttpStatus.OK);
+    }
+
     @PostMapping("/class-credit-maintenance/update")
     public ResponseEntity<ClassCreditDTO> updateClassCredit(@RequestBody ClassCreditDTO classCreditDTO){
         return new ResponseEntity<>(maintenanceService.updateClassCredit(classCreditDTO), HttpStatus.OK);

@@ -13,4 +13,5 @@ public interface ClassCreditsStudentsRepository extends JpaRepository<ClassCredi
     ClassCreditsStudents findFirstByStudentAndStatusAndClassCreditIn(Student student, String status, List<ClassCredit> classCreditList);
     List<ClassCreditsStudents> findAllByClassCredit(ClassCredit classCredit);
     List<ClassCreditsStudents> findAllByClassCreditAndStatus(ClassCredit classCredit, String status);
+
 }
